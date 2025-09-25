@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="upload-section">
+    <h2>Soil Classifier</h2>
+    <p>Upload or capture an image to classify soil type and get crop recommendations!</p>
+
+    <!-- Soil Upload form -->
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="soil_image" accept="image/*" required>
+        <br><br>
+        <button type="submit">Predict</button>
+    </form>
+
+    <br><hr><br>
+
+    <!-- Webcam capture -->
+    <div>
+        <h3>Or click a picture of soil:</h3>
+        <video id="camera" autoplay playsinline width="300" style="border:1px solid #ccc;"></video><br>
+        <button onclick="captureImage()">Capture</button>
+        <canvas id="snapshot" style="display:none;"></canvas>
+        <form id="captureForm" method="POST" enctype="multipart/form-data" style="display:none;">
+            <input type="hidden" name="captured_image" id="captured_image">
+            <button type="submit">Analyze Capture</button>
+        </form>
+    </div>
+
+    {% if predicted_soil %}
+        <div class="result-box" style="margin-top:20px;">
+            <h3>Soil Analysis Result:</h3>
+            <p><b>Detected Soil Type:</b> {{ predicted_soil }}</p>
+
+            {% if recommended_crops %}
+                <p><b>Recommended crops:</b> {{ recommended_crops | join(', ') }}</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<script>
+const video = document.getElementById('camera');
+const canvas = document.getElementById('snapshot');
+const ctx = canvas.getContext('2d');
+const captureForm = document.getElementById('captureForm');
+
+navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => { video.srcObject = stream; })
+    .catch(err => { console.warn("Could not access camera:", err); });
+
+function captureImage() {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    let dataUrl = canvas.toDataURL('image/png');
+    document.getElementById('captured_image').value = dataUrl;
+    captureForm.style.display = "block";
+}
+</script>
+{% endblock %}

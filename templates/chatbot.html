@@ -1,0 +1,210 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+<div class="chatbot-container container" id="chatbot-root">
+
+  <!-- LEFT: Assistant + voice + quick Qs -->
+  <aside class="chat-sidebar" aria-label="Assistant controls">
+    <!-- Assistant welcome card -->
+    <div class="card assistant-card" role="region" aria-label="{{ tr('ASSISTANT') }}">
+      <div class="assistant-avatar" aria-hidden="true">
+        <img src="{{ url_for('static', filename='icons/assistant.svg') }}" alt="Assistant">
+      </div>
+      <div class="assistant-text">
+        <p class="assistant-msg">{{ tr('WELCOME_MSG') }}</p>
+        <div class="assistant-sub">AgriSmart · {{ tr('ASSISTANT_SUBTITLE') }}</div>
+      </div>
+    </div>
+
+    <!-- Voice controls -->
+    <div class="card voice-card" role="region" aria-labelledby="voice-heading">
+      <h4 id="voice-heading">{{ tr('SPEAK_TO_ASSISTANT') }}</h4>
+      <div class="voice-row">
+        <button id="start-voice" class="btn vc-start" title="{{ tr('START_RECORDING') }}">{{ tr('START_RECORDING') }}</button>
+        <button id="stop-voice" class="btn vc-stop" disabled title="{{ tr('STOP') }}">{{ tr('STOP') }}</button>
+
+        <label for="preferred-lang" class="visually-hidden">{{ tr('PREFERRED_LANGUAGE') }}</label>
+        <select id="preferred-lang" class="lang-select" aria-label="{{ tr('PREFERRED_LANGUAGE') }}">
+          <option value="auto">{{ tr('AUTO_DETECT') }}</option>
+          <option value="en-US">English</option>
+          <option value="ta-IN">தமிழ்</option>
+          <option value="hi-IN">हिन्दी</option>
+          <option value="te-IN">తెలుగు</option>
+          <option value="ml-IN">മലയാളം</option>
+          <option value="kn-IN">ಕನ್ನಡ</option>
+        </select>
+      </div>
+
+      <div class="transcript-box" aria-live="polite">
+        <small>{{ tr('TRANSCRIPT') }}:</small>
+        <div id="transcript-text" class="transcript-text">{{ tr('TRANSCRIPT_NO_SPEECH') }}</div>
+        <audio id="bot-audio" controls class="bot-audio" style="display:none;"></audio>
+      </div>
+    </div>
+
+    <!-- Quick questions -->
+    <div class="card quick-card" role="region" aria-label="{{ tr('QUICK_QUESTIONS') }}">
+      <h4>{{ tr('QUICK_QUESTIONS') }}</h4>
+      <div class="qq-list">
+        <button class="qq-pill" type="button">{{ tr('QQ_WHEAT_DISEASES') }}</button>
+        <button class="qq-pill" type="button">{{ tr('QQ_SOIL_QUALITY') }}</button>
+        <button class="qq-pill" type="button">{{ tr('QQ_BLACK_SOIL') }}</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- RIGHT: Chat history + input -->
+  <main class="chat-main" aria-live="polite">
+    <div class="chat-header">
+      <div>
+        <h3>{{ tr('CHAT') }}</h3>
+        <div class="chat-sub"></div>
+      </div>
+      <div>
+        {% if 'username' in session %}
+          <button id="clear-history" class="clear-btn" type="button">{{ tr('CLEAR') }}</button>
+        {% endif %}
+      </div>
+    </div>
+
+    <div id="chat-history" class="chat-history" role="log" aria-label="{{ tr('CHAT_HISTORY') }}">
+      {% if 'username' not in session %}
+        <div class="history-placeholder"><p>{{ tr('LOGIN_TO_VIEW_HISTORY')|safe }}</p></div>
+      {% else %}
+        {% if history %}
+          {% for item in history %}
+            <div class="chat-bubble user">
+              <span class="meta">{{ item.username or session['username'] }} · <span class="history-ts">{{ item.timestamp }}</span></span>
+              <div class="bubble-text">{{ item.user_message|e }}</div>
+            </div>
+
+            <div class="chat-bubble bot">
+              <span class="meta">{{ tr('BOT') }} · <span class="history-ts">{{ item.timestamp }}</span></span>
+              <div class="bubble-text">{{ item.bot_response|e }}</div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="history-placeholder"><p>{{ tr('NO_HISTORY_YET') }}</p></div>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <!-- Typing indicator -->
+    <div id="typing-indicator" class="typing-indicator" aria-hidden="true" style="display:none;">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      <span class="ti-text">{{ tr('BOT_TYPING') }}</span>
+    </div>
+
+    <!-- Input -->
+    <form id="chat-form" class="chat-input" method="POST" aria-label="{{ tr('ASK_THE_ASSISTANT') }}">
+      {# CSRF token if needed #}
+      <label for="user-query" class="visually-hidden">{{ tr('ASK_PLACEHOLDER') }}</label>
+      <textarea name="user_query" id="user-query" class="chat-textarea" rows="2" placeholder="{{ tr('ASK_PLACEHOLDER') }}" required></textarea>
+
+      <!-- Circular send button -->
+      <button type="submit" class="send-btn" id="send-btn" aria-label="{{ tr('SEND') }}">➤</button>
+    </form>
+  </main>
+</div>
+
+<script>window.sessionUser = "{{ session.get('username') or '' }}";</script>
+<script src="{{ url_for('static', filename='js/chat_voice.js') }}"></script>
+<script src="{{ url_for('static', filename='js/chat_quickpill.js') }}"></script>
+
+<script>
+// AJAX submit + enhancements (keeps your original logic but uses modern DOM updates)
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('chat-form');
+  const ta = document.getElementById('user-query');
+  const historyEl = document.getElementById('chat-history');
+  const typing = document.getElementById('typing-indicator');
+  const sendBtn = document.getElementById('send-btn');
+
+  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+  form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = ta.value.trim();
+  if (!text) return;
+
+  // Add user bubble immediately
+  const userBubble = document.createElement('div');
+  userBubble.className = 'chat-bubble user new';
+  userBubble.innerHTML = `<span class="meta">${escapeHtml(window.sessionUser || 'You')} · <span class="history-ts">now</span></span>
+                          <div class="bubble-text">${escapeHtml(text)}</div>`;
+  historyEl.prepend(userBubble);
+
+  ta.value = '';
+  typing.style.display = 'flex';
+  sendBtn.disabled = true;
+
+  try {
+    const resp = await fetch('{{ url_for("ajax_chat") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      body: JSON.stringify({ user_query: text })
+    });
+    const data = await resp.json();
+    if (data.tts_audio_url) {
+      try {
+        const audioEl = document.getElementById('bot-audio');
+        if (audioEl) {
+          audioEl.src = data.tts_audio_url;
+          audioEl.style.display = 'block'; // show the audio controls
+          audioEl.play().catch(err => console.warn('TTS autoplay blocked', err));
+        }
+      } catch (e) {
+    console.warn('TTS playback failed', e);
+  }
+}
+
+    // Add bot bubble after response
+    const botBubble = document.createElement('div');
+    botBubble.className = 'chat-bubble bot new';
+    botBubble.innerHTML = `<span class="meta">${escapeHtml('{{ tr("BOT") }}')} · <span class="history-ts">now</span></span>
+                           <div class="bubble-text">${escapeHtml(data.bot_response || '')}</div>`;
+    historyEl.prepend(botBubble);  // ✅ prepend instead of append
+    historyEl.scrollTop = 0;
+
+  } catch (err) {
+    const errBubble = document.createElement('div');
+    errBubble.className = 'chat-bubble bot new';
+    errBubble.innerHTML = `<span class="meta">${escapeHtml('{{ tr("BOT") }}')}</span>
+                           <div class="bubble-text">Network error — please try again.</div>`;
+    historyEl.prepend(errBubble);
+  } finally {
+    typing.style.display = 'none';
+    sendBtn.disabled = false;
+  }
+});
+
+
+  const clearBtn = document.getElementById('clear-history');
+  if(clearBtn){
+    clearBtn.addEventListener('click', async () => {
+      if(!confirm('{{ tr("CONFIRM_CLEAR_HISTORY") }}')) return;
+      await fetch('{{ url_for("clear_history") }}', { method: 'POST', headers: {'X-Requested-With':'XMLHttpRequest'} });
+      historyEl.innerHTML = `<div class="history-placeholder"><p>{{ tr('NO_HISTORY_YET') }}</p></div>`;
+    });
+  }
+
+  // quick pill behaviour
+  document.querySelectorAll('.qq-pill').forEach(btn => btn.addEventListener('click', () => {
+    ta.value = btn.textContent.trim(); ta.focus();
+  }));
+
+// Allow Enter to submit (Shift+Enter still gives newline)
+  ta.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+      }
+});
+
+});
+</script>
+
+{% endblock %}

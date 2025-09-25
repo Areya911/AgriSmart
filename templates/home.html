@@ -1,0 +1,63 @@
+{% extends 'base.html' %} 
+{% block content %}
+<div class="home-container">
+    <div>
+        <div class="user-welcome-row">
+              <div>
+        <h3><strong>Welcome AgriSmart</strong></h3>
+        <p>
+            AgriSmart is an AI-powered smart assistant designed to support both new and experienced farmers by providing intelligent, real-time agricultural guidance.
+            It combines cutting-edge technologies like <strong>YOLOv8 image detection</strong>, <strong>ML-based crop advisory</strong>, and <strong>multilingual chatbot assistance</strong> 
+            to empower farmers with knowledge and tools to improve productivity and sustainability.
+        </p>
+        
+        <ul class="feature-list">
+            <li>Personalized Planting Suggestions</li>
+            <li>Smart AI Assistant</li>
+            <li>Soil Type Detection</li>
+            <li>Plant Disease and Pest Detection</li>
+            <li>Multilingual voice chat (English, Tamil, Malayalam, Telugu, Kannada,Hindi)</li>
+        </ul>
+    </div>
+
+    <div>
+        <img src="{{ url_for('static', filename='farming.png') }}" alt="AI Farming" style="max-width: 250px; border-radius: 12px;">
+    </div>
+</div>
+<section class="yolo-section">
+  <div class="container text-center">
+    <h2 class="yolo-title">YOLOv8 AI Technology</h2>
+    <p class="yolo-subtitle">Experience  real-time object detection for precise farming insights</p>
+    
+    <div class="yolo-features">
+      <div class="feature-card green">
+        <span class="icon"></span>
+        <h3>Real-time Detection</h3>
+        <p>Instant analysis for mobile apps</p>
+      </div>
+      <div class="feature-card blue">
+        <span class="icon"></span>
+        <h3>Multi-object Detection</h3>
+        <p>Detect multiple diseases or pests in one image</p>
+      </div>
+      <div class="feature-card purple">
+        <span class="icon"></span>
+        <h3>High Accuracy</h3>
+        <p>80%+ accuracy</p>
+      </div>
+      <div class="feature-card yellow">
+        <span class="icon"></span>
+        <h3>Lightweight</h3>
+        <p>Runs efficiently on smartphones</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="agrismart-footer">
+  <div class="container text-center">
+    <p>Empowering farmers with technology for smarter,productive farming.</p>
+  </div>
+</section>
+
+{% endblock %}

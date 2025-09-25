@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Soil Type Detection — AgriSmart</title>
+
+  <!-- Google Fonts (put this in the <head>, NOT in style.css) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+
+  <!-- Your stylesheet (Flask) -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header style="padding:12px 20px; display:flex; justify-content:space-between; align-items:center;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="AgriSmart" style="height:48px;">
+      <strong style="color:#1a4c1b; font-family:Poppins, Inter, sans-serif;">AgriSmart</strong>
+    </div>
+    <nav style="font-weight:600;">
+      <a href="/" style="margin:0 8px; color:#2e5c2e;">Home</a>
+      <a href="/disease" style="margin:0 8px; color:#2e5c2e;">Disease Detection</a>
+      <a href="/yield" style="margin:0 8px; color:#2e5c2e;">Yield</a>
+    </nav>
+  </header>
+
+  <main class="container" style="max-width:900px; margin:36px auto; padding:18px;">
+    <h1 style="font-family:Poppins, Inter, sans-serif; color:#163d13; margin-bottom:18px;">Smart Farming Assistant</h1>
+
+    <div class="home-container" style="background:#fff; padding:20px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.06);">
+      <form method="POST" enctype="multipart/form-data">
+        <label for="image" style="display:block; font-weight:600; margin-bottom:8px;">Upload soil image</label>
+        <input id="image" type="file" name="image" accept="image/*" required style="padding:10px; border-radius:8px; border:1px solid #e6f2e6;">
+        <br><br>
+        <button type="submit" class="cta-button" style="display:inline-block; padding:10px 18px; border-radius:10px; border:none; background:#1a4c1b; color:#fff; font-weight:700; cursor:pointer;">
+          Predict Soil Type
+        </button>
+      </form>
+
+      {% if prediction %}
+      <div class="result-section" style="margin-top:18px; padding:14px; background:#f7fff6; border-left:5px solid #1a4c1b; border-radius:8px;">
+        <h2 style="margin:0; font-size:1.125rem;">Predicted Soil Type: <span class="result" style="font-weight:800; color:#1a4c1b;">{{ prediction }}</span></h2>
+        <!-- Optionally show more info here -->
+      </div>
+      {% endif %}
+    </div>
+  </main>
+
+  <!-- floating chat button (optional) -->
+  <button class="floating-chat" aria-label="Open Chat" title="Chat with AgriSmart" style="position:fixed; right:20px; bottom:28px; width:56px; height:56px; border-radius:50%; background:linear-gradient(180deg,#1a4c1b,#3d9640); color:#fff; border:none; font-size:20px; box-shadow:0 12px 30px rgba(14,62,20,0.18); cursor:pointer;">
+    
+  </button>
+</body>
+</html>

@@ -1,0 +1,34 @@
+{
+  "HOME": "Home",
+  "CROPS": "Crops",
+  "SOIL": "Soil",
+  "PLANT": "Plant",
+  "CHATBOT": "Chatbot",
+  "CONTACT_US": "Contact Us",
+  "PROFILE": "Profile",
+
+  "WELCOME_MSG": "Hello! I'm your AI farming assistant. How can I help today?",
+  "SPEAK_TO_ASSISTANT": "Speak to AgriSmart",
+  "SUPPORTED_LANGS": "English / Tamil / Hindi / Telugu / Malayalam / Kannada",
+  "START_RECORDING": "Start recording",
+  "STOP": "Stop",
+  "PREFERRED_LANGUAGE": "Preferred language",
+  "AUTO_DETECT": "Auto-detect language",
+
+  "TRANSCRIPT": "Transcript",
+  "TRANSCRIPT_NO_SPEECH": "(No speech yet)",
+
+  "QUICK_QUESTIONS": "Quick questions",
+  "QQ_WHEAT_DISEASES": "What diseases affect wheat crops?",
+  "QQ_SOIL_QUALITY": "How to improve soil quality?",
+
+  "LOGIN_TO_VIEW_HISTORY": "You must <a href='/login'>log in</a> to view saved chat history. Your conversation will be saved once you log in.",
+  "YOU": "You",
+  "BOT": "Bot",
+  "NO_HISTORY_YET": "No chat history yet — ask the bot something and it will appear here.",
+
+  "ASK_PLACEHOLDER": "Ask a question...",
+  "ASK": "Ask",
+  "BACK_HOME": "Back to home",
+  "LATEST_RESPONSE": "Latest response"
+}

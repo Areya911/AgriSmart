@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container" style="max-width:680px; margin:36px auto; padding:22px;">
+  <div style="text-align:center; margin-bottom:18px;">
+    <!-- Google signup (placeholder link - replace with OAuth endpoint when ready) -->
+<a href="{{ url_for('oauth_google') }}" class="login-btn" 
+   style="display:inline-flex; align-items:center; gap:10px; justify-content:center; padding:12px 18px;">
+  <img src="{{ url_for('static', filename='google_logo.png') }}" alt="Google" style="height:20px;">
+  Sign up using Google
+</a>
+
+
+    <div style="margin-top:12px; font-size:0.95rem; color:#666;">or enter the following details</div>
+  </div>
+
+  <!-- Profile picture centered at top (optional) -->
+  <div style="text-align:center; margin: 18px 0;">
+    <div style="display:inline-block; text-align:center;">
+      <img id="preview_profile_pic" src="{{ url_for('static', filename='user.png') }}" alt="Profile" style="width:140px;height:140px;border-radius:50%;object-fit:cover;border:2px solid rgba(26,76,27,0.08);">
+      <div style="margin-top:8px;">
+        <input id="signup_profile_pic" type="file" name="profile_pic" accept="image/*" style="display:none;">
+        <button type="button" id="choosePicBtn" class="secondary-cta" style="padding:8px 12px;">Upload profile picture (optional)</button>
+      </div>
+    </div>
+  </div>
+
+  <form id="signupForm" method="POST" enctype="multipart/form-data" style="margin-top:6px;">
+    <!-- Full name -->
+    <div style="margin-bottom:10px;">
+      <label><strong>Full name</strong></label>
+      <input name="display_name" required class="form-control" placeholder="Your full name" value="{{ request.form.get('display_name','') }}">
+    </div>
+
+    <!-- Contact number -->
+    <div style="margin-bottom:10px;">
+      <label><strong>Contact number</strong></label>
+      <input name="phone" type="tel" required class="form-control" placeholder="+91-9876543210" value="{{ request.form.get('phone','') }}">
+    </div>
+
+    <!-- Email -->
+    <div style="margin-bottom:10px;">
+      <label><strong>Email</strong></label>
+      <input name="email" type="email" required class="form-control" placeholder="you@example.com" value="{{ request.form.get('email','') }}">
+    </div>
+
+    <!-- Language -->
+    <div style="margin-bottom:10px;">
+      <label><strong>Preferred language</strong></label>
+      <select name="language" required class="form-control">
+        <option value="en" {% if request.form.get('language','en')=='en' %}selected{% endif %}>English</option>
+        <option value="hi" {% if request.form.get('language')=='hi' %}selected{% endif %}>हिन्दी</option>
+        <option value="ta" {% if request.form.get('language')=='ta' %}selected{% endif %}>தமிழ்</option>
+        <option value="kn" {% if request.form.get('language')=='kn' %}selected{% endif %}>ಕನ್ನಡ</option>
+        <option value="ml" {% if request.form.get('language')=='ml' %}selected{% endif %}>മലയാളം</option>
+        <option value="te" {% if request.form.get('language')=='te' %}selected{% endif %}>తెలుగు</option>
+      </select>
+    </div>
+
+    <!-- Location -->
+    <div style="display:flex; gap:12px; margin-bottom:10px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:180px;">
+        <label><strong>State</strong></label>
+        <select name="state" id="signup_state" required class="form-control">
+          <option value="">-- Select State --</option>
+          {% for st in (states if states is defined else []) %}
+            <option value="{{ st }}" {% if request.form.get('state')==st %}selected{% endif %}>{{ st }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="flex:1; min-width:180px;">
+        <label><strong>District</strong></label>
+        <select name="district" id="signup_district" required class="form-control">
+          <option value="">-- Select District --</option>
+          {% if request.form.get('district') %}
+            <option value="{{ request.form.get('district') }}" selected>{{ request.form.get('district') }}</option>
+          {% endif %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Land size -->
+    <div style="margin-bottom:10px;">
+      <label><strong>Land size (acres)</strong></label>
+      <input name="land_size" type="number" step="0.1" min="0" required class="form-control" value="{{ request.form.get('land_size_acres','2') }}">
+    </div>
+
+    <!-- Username + Password -->
+    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
+      <div style="flex:1; min-width:200px;">
+        <label><strong>Create username</strong></label>
+        <input name="username" required class="form-control" placeholder="Choose a username" value="{{ request.form.get('username','') }}">
+      </div>
+      <div style="flex:1; min-width:200px;">
+        <label><strong>Create password</strong></label>
+        <input name="password" type="password" required class="form-control" placeholder="Choose a secure password">
+      </div>
+    </div>
+
+    <div style="display:flex; gap:12px; align-items:center;">
+      <button type="submit" class="cta-button">Sign up</button>
+      <a href="{{ url_for('login') }}" class="secondary-cta">Already have an account?</a>
+    </div>
+
+  </form>
+</div>
+
+
+<script>
+  // preview image & wire the upload button
+  document.getElementById('choosePicBtn').addEventListener('click', function(){ 
+    document.getElementById('signup_profile_pic').click(); 
+  });
+  document.getElementById('signup_profile_pic').addEventListener('change', function(e){
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = function(ev){ 
+      document.getElementById('preview_profile_pic').src = ev.target.result; 
+    };
+    reader.readAsDataURL(f);
+  });
+
+  // define stateSelect only once
+  const stateSelect = document.getElementById('signup_state');
+
+  // dynamic districts loader on change
+  stateSelect && stateSelect.addEventListener('change', async function(){
+    const st = this.value;
+    const districtSel = document.getElementById('signup_district');
+    districtSel.innerHTML = '<option>Loading...</option>';
+    try {
+      const resp = await fetch(`/get_districts?state=${encodeURIComponent(st)}`);
+      const j = await resp.json();
+      districtSel.innerHTML = '<option value="">-- Select District --</option>';
+      (j.districts||[]).forEach(d => {
+        const o = document.createElement('option'); 
+        o.value = d; 
+        o.textContent = d; 
+        districtSel.appendChild(o);
+      });
+    } catch(e) { 
+      districtSel.innerHTML = '<option value="">-- error --</option>'; 
+    }
+  });
+
+  // populate districts on load if a state was already selected
+  (async function populateDistrictsOnLoad(){
+    try {
+      const st = stateSelect && stateSelect.value;
+      if (st) {
+        const districtSel = document.getElementById('signup_district');
+        districtSel.innerHTML = '<option>Loading...</option>';
+        const resp = await fetch(`/get_districts?state=${encodeURIComponent(st)}`);
+        const j = await resp.json();
+        districtSel.innerHTML = '<option value="">-- Select District --</option>';
+        (j.districts||[]).forEach(d => {
+          const o = document.createElement('option'); 
+          o.value = d; 
+          o.textContent = d;
+          if (d === "{{ request.form.get('district')|escape }}") {
+            o.selected = true;
+          }
+          districtSel.appendChild(o);
+        });
+      }
+    } catch(e) {
+      console.warn("Could not prepopulate districts", e);
+    }
+  })();
+</script>
+
+{% endblock %}

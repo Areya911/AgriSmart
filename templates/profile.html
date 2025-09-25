@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<div class="profile-page container">
+  <!-- main card turned into a three-column layout and sections -->
+  <div class="profile-card three-col-layout">
+
+    <!-- LEFT: avatar + personal info (inside a section card) -->
+    <aside class="profile-left profile-section" aria-labelledby="personal-info-heading">
+      <h2 id="personal-info-heading" class="sr-only">Personal information</h2>
+
+      <div class="avatar-wrap" style="margin-bottom:0.6rem;">
+        {% set pic = (user_profile.profile_pic if user_profile and user_profile.profile_pic else None) %}
+        <img id="profile_pic_img"
+             src="{{ url_for('static', filename=pic) if pic else url_for('static', filename='user.png') }}"
+             class="profile-avatar" />
+        <div class="avatar-caption">Profile picture</div>
+      </div>
+
+      <div class="personal-info">
+        <div class="info-row"><strong>Username</strong><span>{{ user_profile.display_name or session.get('username') }}</span></div>
+        <div class="info-row"><strong>Age</strong><span>{{ user_profile.age or "—" }}</span></div>
+        <div class="info-row"><strong>Email</strong><span>{{ user_profile.email or session.get('email','-') }}</span></div>
+        <div class="info-row"><strong>Phone</strong><span>{{ user_profile.phone or session.get('phone','-') }}</span></div>
+        <div class="info-row"><strong>Location</strong>
+          <span>
+            {% if user_profile and user_profile.district and user_profile.state %}
+              {{ user_profile.district }}, {{ user_profile.state }}
+            {% else %}
+              Not set
+            {% endif %}
+          </span>
+        </div>
+        <div class="info-row"><strong>Language</strong><span>{{ (user_profile.language if (user_profile and user_profile.language) else session.get('language','en')) }}</span></div>
+      </div>
+
+      <div class="edit-wrap" style="margin-top:1rem;">
+       <a href="{{ url_for('edit_profile') }}" class="btn-edit" id="editProfileBtn">Edit Profile</a>
+      </div>
+    </aside>
+
+    <!-- CENTER: Farming Preferences (section card) -->
+    <main class="profile-center profile-section" aria-labelledby="prefs-heading">
+      <h2 id="prefs-heading" class="section-title">Farming Preferences</h2>
+
+      <div class="pref-block">
+        <p class="pref-row"><strong>Land Size:</strong> <span>{{ user_profile.land_size or "nil"}}</span></p>
+        <p class="pref-row"><strong>Farming Type:</strong> <span>{{ user_profile.farming_type or "nil" }}</span></p>
+      </div>
+    </main>
+
+    <!-- RIGHT: Activity History (section card) -->
+    <aside class="profile-right profile-section" aria-labelledby="activity-heading">
+      <h2 id="activity-heading" class="section-title">Activity History</h2>
+
+      <div class="activity-item">
+        <div class="activity-title"><strong>Last Uploaded Soil Image</strong></div>
+        <div class="activity-body" style="margin-top:0.5rem;">
+          {% if user_profile and user_profile.last_soil_img %}
+            <div style="display:flex;align-items:center;gap:0.6rem;">
+              <img src="{{ url_for('static', filename='uploads/' ~ user_profile.last_soil_img) }}" alt="Soil upload preview" class="thumb">
+              <div>
+                <div class="thumb-result">{{ user_profile.last_soil_result or "Result: —" }}</div>
+                <div class="small-meta">{{ user_profile.last_soil_date or "" }}</div>
+              </div>
+            </div>
+          {% else %}
+            <div class="no-activity">No uploads yet</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="activity-item">
+        <div class="activity-title"><strong>Last Uploaded Leaf Image</strong></div>
+        <div class="activity-body" style="margin-top:0.5rem;">
+          {% if user_profile and user_profile.last_leaf_img %}
+            <div style="display:flex;align-items:center;gap:0.6rem;">
+              <img src="{{ url_for('static', filename='uploads/' ~ user_profile.last_leaf_img) }}" alt="Leaf upload preview" class="thumb">
+              <div>
+                <div class="thumb-result">{{ user_profile.last_leaf_result or "Result: —" }}</div>
+                <div class="small-meta">{{ user_profile.last_leaf_date or "" }}</div>
+              </div>
+            </div>
+          {% else %}
+            <div class="no-activity">No uploads yet</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="activity-item">
+        <div class="activity-title"><strong>Recent Crop Suggestions Viewed</strong></div>
+        <div class="activity-body" style="margin-top:0.5rem;">
+          <ul class="recent-suggestions">
+            {% for s in (user_profile.recent_suggestions if user_profile and user_profile.recent_suggestions else []) %}
+              <li>{{ s }}</li>
+            {% else %}
+              <li>No suggestions viewed</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<!-- Keep the small script for edit action if needed -->
+<script>
+document.getElementById('editProfileBtn')?.addEventListener('click', function(e){
+  // default behavior is to navigate to the profile edit route.
+  // If you change to an inline modal later, you can preventDefault() here.
+});
+</script>
+{% endblock %}

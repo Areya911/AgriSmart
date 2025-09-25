@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="page-container">
+    <h2 class="page-title">Common Crops of India</h2>
+    <p class="page-sub">Click a card to flip and view quick growing info, diseases and suggested treatments.</p>
+
+         <!-- 🔍 Search Bar -->
+    <div style="text-align:center; margin: 20px 0;">
+        <input type="text" id="cropSearch" placeholder="Search crops" 
+               style="padding:10px; width:50%; border:1px solid #ccc; border-radius:5px; font-size:16px;">
+         <p id="noResults" style="display:none; margin-top:10px; color:#a00; font-weight:bold;">
+         No crops found
+    </p>
+    
+    </div>
+
+    <div class="crop-grid" id="cropGrid">
+    {% set crops = [
+        {'key':'cotton','name':'Cotton','soil':'Black/Loamy','irrigation':'Medium','season':'Kharif','diseases':['Bacterial blight','Cotton bollworm'],'pesticides':['Emamectin benzoate','Chlorantraniliprole']},
+        {'key':'groundnut','name':'Groundnut','soil':'Sandy loam','irrigation':'Low to Medium','season':'Kharif','diseases':['Leaf spot','Rust'],'pesticides':['Mancozeb','Carbendazim']},
+        {'key':'sunflower','name':'Sunflower','soil':'Loamy, well drained','irrigation':'Low to Medium','season':'Rabi/Kharif','diseases':['Downy mildew','Rust'],'pesticides':['Metalaxyl','Mancozeb']},
+        {'key':'soybean','name':'Soybean','soil':'Black/Loamy','irrigation':'Medium','season':'Kharif','diseases':['Rust','Yellow mosaic virus'],'pesticides':['Propiconazole','Imidacloprid']},
+        {'key':'sugarcane','name':'Sugarcane','soil':'Alluvial/Loamy','irrigation':'High','season':'Annual','diseases':['Red rot','Wilt'],'pesticides':['Carbendazim','Chlorpyrifos']},
+        {'key':'maize','name':'Maize','soil':'Loamy,Sandy loam','irrigation':'Medium','season':'Kharif/Rabi','diseases':['Downy mildew','Stem borer'],'pesticides':['Carbofuran','Azadirachtin']},
+        {'key':'jowar','name':'Jowar (Sorghum)','soil':'Red/Black','irrigation':'Low to Medium','season':'Kharif','diseases':['Ergot','Shoot fly'],'pesticides':['Zineb','Lambda-cyhalothrin']},
+        {'key':'wheat','name':'Wheat','soil':'Alluvial/Loamy','irrigation':'Medium','season':'Rabi','diseases':['Rust','Powdery mildew'],'pesticides':['Tebuconazole','Carbendazim']},
+        {'key':'ragi','name':'Ragi (Finger millet)','soil':'Red/Sandy loam','irrigation':'Low','season':'Kharif','diseases':['Blast','Shoot fly'],'pesticides':['Hexaconazole','Malathion']},
+        {'key':'bajra','name':'Bajra (Pearl millet)','soil':'Sandy/Loamy','irrigation':'Low','season':'Kharif','diseases':['Downy mildew','Ergot'],'pesticides':['Metalaxyl','Zineb']},
+        {'key':'castor','name':'Castor','soil':'Loamy,Sandy','irrigation':'Low','season':'Kharif/Rabi','diseases':['Alternaria leaf spot','Wilt'],'pesticides':['Copper oxychloride','Carbendazim']},
+        {'key':'rice','name':'Rice','soil':'Clay/Alluvial','irrigation':'High','season':'Kharif/Rabi','diseases':['Blast','Sheath blight'],'pesticides':['Tricyclazole','Carbendazim']},
+        {'key':'mustard','name':'Mustard','soil':'Loamy','irrigation':'Low to Medium','season':'Rabi','diseases':['White rust','Alternaria'],'pesticides':['Mancozeb','Carbendazim']},
+        {'key':'jute','name':'Jute','soil':'Alluvial','irrigation':'High','season':'Kharif','diseases':['Stem rot','Root rot'],'pesticides':['Copper oxychloride','Mancozeb']},
+        {'key':'barley','name':'Barley','soil':'Loamy','irrigation':'Low to Medium','season':'Rabi','diseases':['Leaf rust','Powdery mildew'],'pesticides':['Propiconazole','Sulphur']},
+        {'key':'potato','name':'Potato','soil':'Loamy,Sandy loam','irrigation':'Medium to High','season':'Rabi','diseases':['Late blight','Common scab'],'pesticides':['Metalaxyl','Chlorothalonil']},
+        {'key':'onion','name':'Onion','soil':'Loamy','irrigation':'Medium','season':'Rabi/Kharif','diseases':['Downy mildew','Stemphylium leaf blight'],'pesticides':['Mancozeb','Mefenoxam']},
+        {'key':'tomato','name':'Tomato','soil':'Loamy','irrigation':'Medium','season':'Kharif/Rabi','diseases':['Early blight','Bacterial spot'],'pesticides':['Copper oxychloride','Mancozeb']},
+        {'key':'banana','name':'Banana','soil':'Loamy,well drained','irrigation':'High','season':'Annual','diseases':['Panama wilt','Sigatoka'],'pesticides':['Carbendazim','Bacillus thuringiensis']},
+        {'key':'mango','name':'Mango','soil':'Loamy/Red','irrigation':'Low to Medium','season':'Summer','diseases':['Powdery mildew','Anthracnose'],'pesticides':['Copper oxychloride','Carbendazim']},
+        {'key':'tea','name':'Tea','soil':'Loamy, acidic','irrigation':'High','season':'Perennial','diseases':['Blister blight','Root rot'],'pesticides':['Copper fungicide','Carbendazim']},
+    {'key':'coffee','name':'Coffee','soil':'Loamy, well-drained','irrigation':'Medium','season':'Perennial','diseases':['Coffee rust','Berry borer'],'pesticides':['Hexaconazole','Chlorpyrifos']},
+    {'key':'rubber','name':'Rubber','soil':'Loamy, alluvial','irrigation':'High','season':'Perennial','diseases':['Powdery mildew','Leaf fall'],'pesticides':['Copper oxychloride','Carbendazim']},
+    {'key':'coconut','name':'Coconut','soil':'Sandy/Loamy','irrigation':'Medium to High','season':'Perennial','diseases':['Bud rot','Leaf blight'],'pesticides':['Tridemorph','Copper oxychloride']},
+    {'key':'pepper','name':'Pepper','soil':'Loamy, well-drained','irrigation':'Medium','season':'Perennial','diseases':['Quick wilt','Anthracnose'],'pesticides':['Metalaxyl','Carbendazim']},
+    {'key':'cardamom','name':'Cardamom','soil':'Loamy, humus-rich','irrigation':'High','season':'Perennial','diseases':['Katte disease','Chenthal wilt'],'pesticides':['Copper oxychloride','Carbendazim']},
+    {'key':'turmeric','name':'Turmeric','soil':'Loamy, well-drained','irrigation':'Medium','season':'Kharif','diseases':['Leaf blotch','Rhizome rot'],'pesticides':['Mancozeb','Copper fungicide']},
+    {'key':'ginger','name':'Ginger','soil':'Loamy, sandy loam','irrigation':'Medium','season':'Kharif','diseases':['Soft rot','Leaf spot'],'pesticides':['Metalaxyl','Mancozeb']},
+    {'key':'chillies','name':'Chillies','soil':'Loamy, black','irrigation':'Medium','season':'Kharif/Rabi','diseases':['Leaf curl','Powdery mildew'],'pesticides':['Imidacloprid','Sulphur']},
+    {'key':'tobacco','name':'Tobacco','soil':'Sandy loam','irrigation':'Low to Medium','season':'Rabi/Kharif','diseases':['Root rot','Leaf spot'],'pesticides':['Copper oxychloride','Mancozeb']},
+    {'key':'grapes','name':'Grapes','soil':'Loamy, black cotton','irrigation':'Medium to High','season':'Summer','diseases':['Downy mildew','Powdery mildew'],'pesticides':['Sulphur','Metalaxyl']},
+    {'key':'guava','name':'Guava','soil':'Loamy, sandy loam','irrigation':'Medium','season':'Summer/Winter','diseases':['Wilt','Anthracnose'],'pesticides':['Copper fungicide','Carbendazim']},
+    {'key':'papaya','name':'Papaya','soil':'Loamy, well-drained','irrigation':'Medium','season':'Perennial','diseases':['Papaya mosaic','Anthracnose'],'pesticides':['Imidacloprid','Copper fungicide']},
+    {'key':'pineapple','name':'Pineapple','soil':'Loamy, sandy','irrigation':'Medium','season':'Perennial','diseases':['Heart rot','Wilt'],'pesticides':['Copper oxychloride','Metalaxyl']},
+    {'key':'apple','name':'Apple','soil':'Loamy, well-drained','irrigation':'Medium to High','season':'Winter','diseases':['Apple scab','Powdery mildew'],'pesticides':['Sulphur','Captan']},
+    {'key':'pears','name':'Pears','soil':'Loamy, clay loam','irrigation':'Medium','season':'Winter','diseases':['Fire blight','Scab'],'pesticides':['Streptomycin','Sulphur']},
+    {'key':'litchi','name':'Litchi','soil':'Loamy, alluvial','irrigation':'Medium','season':'Summer','diseases':['Fruit rot','Wilt'],'pesticides':['Copper oxychloride','Mancozeb']},
+    {'key':'watermelon','name':'Watermelon','soil':'Sandy loam','irrigation':'Medium to High','season':'Summer','diseases':['Fusarium wilt','Downy mildew'],'pesticides':['Carbendazim','Metalaxyl']},
+    {'key':'muskmelon','name':'Muskmelon','soil':'Sandy loam','irrigation':'Medium','season':'Summer','diseases':['Powdery mildew','Fusarium wilt'],'pesticides':['Sulphur','Carbendazim']},
+    {'key':'cucumber','name':'Cucumber','soil':'Loamy, sandy loam','irrigation':'Medium','season':'Summer','diseases':['Downy mildew','Anthracnose'],'pesticides':['Copper fungicide','Metalaxyl']}
+    ] %}
+
+{% for crop in crops %}
+    <article class="crop-card" data-name="{{ crop.name | lower }}" tabindex="0" role="button" aria-pressed="false">
+        <div class="card-inner">
+            <div class="card-front">
+                {% set img_file = 'crop_images/' ~ crop.key ~ '.png' %}
+                <img src="{{ url_for('static', filename=img_file) }}" alt="{{ crop.name }}">
+                <h4>{{ crop.name }}</h4>
+            </div>
+
+            <div class="card-back">
+                <h4>{{ crop.name }}</h4>
+                <ul class="info-list">
+                    <li><strong>Soil:</strong> {{ crop.soil }}</li>
+                    <li><strong>Irrigation:</strong> {{ crop.irrigation }}</li>
+                    <li><strong>Season:</strong> {{ crop.season }}</li>
+                    <li><strong>Diseases:</strong>
+                        <ul>
+                            {% for d in crop.diseases %}
+                                <li>{{ d }}</li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    <li><strong>Pesticides:</strong>
+                        <ul>
+                            {% for p in crop.pesticides %}
+                                <li>{{ p }}</li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </article>
+{% endfor %}
+
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.crop-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+            this.classList.toggle('flipped');
+        });
+        card.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.classList.toggle('flipped');
+            }
+        });
+    });
+});
+
+  // 🔍 Live Search
+    document.getElementById('cropSearch').addEventListener('input', function() {
+        let query = this.value.toLowerCase();
+        document.querySelectorAll('.crop-card').forEach(function(card) {
+            let name = card.getAttribute('data-name');
+            card.style.display = name.includes(query) ? "block" : "none";
+        });
+    });
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container" style="max-width:820px; padding:24px;">
+  <h1>Edit Profile</h1>
+  <form action="{{ url_for('edit_profile') }}" method="post" enctype="multipart/form-data" class="profile-edit-form">
+    
+    <label>Display name</label>
+    <input type="text" name="display_name" value="{{ user_profile.display_name or '' }}">
+
+    <label>Age</label>
+    <input type="text" name="age" value="{{ user_profile.age or '' }}">
+
+    <label>Email</label>
+    <input type="email" name="email" value="{{ user_profile.email or '' }}">
+
+    <label>Phone</label>
+    <input type="text" name="phone" value="{{ user_profile.phone or '' }}">
+
+    <label>District</label>
+    <input type="text" name="district" value="{{ user_profile.district or '' }}">
+
+    <label>State</label>
+    <input type="text" name="state" value="{{ user_profile.state or '' }}">
+
+    <label>Preferred language</label>
+    <input type="text" name="language" value="{{ user_profile.language or session.get('language','') }}">
+
+    <label>Land size</label>
+    <input type="text" name="land_size" value="{{ user_profile.land_size or '' }}">
+
+    <label>Farming type</label>
+    <input type="text" name="farming_type" value="{{ user_profile.farming_type or '' }}">
+
+    <label>Profile picture</label>
+    <input type="file" name="profile_pic" accept="image/*">
+
+    <div style="margin-top:12px;">
+      <button type="submit" class="btn-edit">Save changes</button>
+      <a href="{{ url_for('profile') }}" class="btn">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

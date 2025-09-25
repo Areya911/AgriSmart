@@ -1,0 +1,186 @@
+{% extends 'base.html' %} 
+{% block content %}
+<div class="upload-section">
+    <h2>Disease Analyzer</h2>
+    <p>Upload or capture a plant/leaf image to check health and get remedies!</p>
+
+    <!-- Plant Upload form -->
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="plant_image" accept="image/*" required>
+        <br><br>
+        <button type="submit">Analyze </button>
+    </form>
+
+    <br><hr><br>
+
+    <!-- Webcam capture -->
+    <div>
+        <h3>Or click a picture of plant/leaf:</h3>
+        <video id="plant_camera" autoplay playsinline width="300" style="border:1px solid #ccc;"></video><br>
+        <button type="button" id="capture-btn" onclick="capturePlantImage()">Capture</button>
+
+        <canvas id="plant_snapshot" style="display:none;"></canvas>
+        <form id="plantCaptureForm" method="POST" enctype="multipart/form-data" style="display:none;">
+            <input type="hidden" name="captured_plant_image" id="captured_plant_image">
+            <button type="submit">Analyze Capture</button>
+        </form>
+    </div>
+
+    {% if health_status is defined and (detected_label is defined or ai_advice is defined) %}
+        <div class="result-box" style="margin-top:18px; padding:18px; border-radius:8px; background:#f7fff7; border:1px solid #e6f0e6;">
+            <h3>Analysis Result</h3>
+
+            <!-- Status -->
+            <p><strong>Status:</strong>
+                {% if health_status %}
+                    {{ health_status }}
+                {% else %}
+                    Unknown
+                {% endif %}
+            </p>
+
+            <!-- Disease name or nil -->
+            <p><strong>Disease:</strong>
+                {% if detected_label %}
+                    {{ detected_label }}
+                    {% if confidence is defined %}
+                        <small style="color:#555;">(confidence: {{ '%.2f'|format(confidence) }})</small>
+                    {% endif %}
+                {% else %}
+                    nil
+                {% endif %}
+            </p>
+
+            <!-- Recommendation / pesticide advice -->
+            <p><strong>Pesticide Recommendation:</strong></p>
+            <div style="background:#fff; padding:10px; border-radius:6px; border:1px solid #eee; white-space:pre-wrap; color:#222;">
+                {% if ai_advice %}
+                    {{ ai_advice | safe }}
+                {% else %}
+                    No recommendation available.
+                {% endif %}
+            </div>
+
+            <!-- YOLO annotation (if available) -->
+            {% if annotation_url %}
+                <h4 style="margin-top:12px;">Your Image:</h4>
+                <img src="{{ annotation_url }}" alt="Annotated image"
+                     style="max-width:20%; border-radius:8px; border:1px solid #ddd; margin-top:6px;">
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<script>
+(() => {
+  const plantVideo  = document.getElementById('plant_camera');
+  const plantCanvas = document.getElementById('plant_snapshot');
+  const plantCaptureForm = document.getElementById('plantCaptureForm');
+  const captureBtn = document.getElementById('capture-btn');
+  const capturedInput = document.getElementById('captured_plant_image');
+
+  // small UI feedback area (create if missing)
+  let statusEl = document.getElementById('plant_status');
+  if (!statusEl) {
+    statusEl = document.createElement('div');
+    statusEl.id = 'plant_status';
+    statusEl.style.marginTop = '8px';
+    statusEl.style.color = '#555';
+    const uploadSection = document.querySelector('.upload-section') || document.body;
+    uploadSection.insertBefore(statusEl, uploadSection.firstChild);
+  }
+
+  let stream = null;
+
+  function setStatus(msg) {
+    statusEl.textContent = msg || '';
+  }
+
+  // Feature detect
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    setStatus('Camera not supported in this browser. Please upload an image file instead.');
+    if (captureBtn) captureBtn.disabled = true;
+    console.warn('getUserMedia not supported');
+    return;
+  }
+
+  // Request camera access
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(s => {
+      stream = s;
+      if (plantVideo) {
+        plantVideo.srcObject = stream;
+        plantVideo.play().catch(()=>{}); // ignore autoplay blocks
+      }
+      setStatus('Camera ready. Click "Capture" to take a photo.');
+      if (captureBtn) captureBtn.disabled = false;
+    })
+    .catch(err => {
+      console.warn('Could not access camera:', err);
+      setStatus('Could not access camera. Please allow camera permission or upload an image file.');
+      if (captureBtn) captureBtn.disabled = true;
+    });
+
+  // Capture function (scales image down to maxWidth to limit size)
+  window.capturePlantImage = function capturePlantImage() {
+    try {
+      if (!plantVideo || !capturedInput || !plantCanvas) {
+        setStatus('Capture elements missing.');
+        return;
+      }
+      const vw = plantVideo.videoWidth || 640;
+      const vh = plantVideo.videoHeight || 480;
+      if (vw === 0 || vh === 0) {
+        setStatus('Video not ready yet. Try again in a moment.');
+        return;
+      }
+
+      // scale to a reasonable maximum width to avoid huge data URIs
+      const maxWidth = 1024;
+      let outW = vw;
+      let outH = vh;
+      if (vw > maxWidth) {
+        outW = maxWidth;
+        outH = Math.round((maxWidth / vw) * vh);
+      }
+
+      plantCanvas.width = outW;
+      plantCanvas.height = outH;
+      const ctx = plantCanvas.getContext('2d');
+      ctx.drawImage(plantVideo, 0, 0, outW, outH);
+
+      // Use JPEG for smaller size (you can keep PNG if you prefer lossless)
+      const dataUrl = plantCanvas.toDataURL('image/jpeg', 0.85);
+      capturedInput.value = dataUrl;
+
+      // reveal the hidden form so user can submit
+      if (plantCaptureForm) plantCaptureForm.style.display = 'block';
+      setStatus('Captured. Click "Analyze Capture" to submit.');
+
+      // Optional: auto-submit form after capture (uncomment if desired)
+      // plantCaptureForm.submit();
+    } catch (e) {
+      console.error('capturePlantImage error', e);
+      setStatus('Capture failed — try again or upload a file.');
+    }
+  };
+
+  // Stop camera on page unload to free device
+  function stopStream() {
+    try {
+      if (stream && stream.getTracks) {
+        stream.getTracks().forEach(t => {
+          try { t.stop(); } catch(e) {}
+        });
+      }
+    } catch (e) {
+      console.warn('Failed to stop camera stream', e);
+    }
+  }
+  window.addEventListener('beforeunload', stopStream);
+  window.addEventListener('pagehide', stopStream);
+
+})();
+</script>
+
+{% endblock %}

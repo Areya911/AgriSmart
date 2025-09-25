@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AgriSmart</title>
+    <!-- Professional fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  
+     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+<header>
+  <div class="header-left container">
+    <a href="{{ url_for('home') }}" style="display:flex; align-items:center; gap:12px; text-decoration:none;">
+      <img src="{{ url_for('static', filename='agrismart_logo.png') }}" alt="AgriSmart logo" class="logo">
+      <div>
+        <div class="brand-name">AgriSmart</div>
+        <div class="brand-sub">Smart guidance for crops &amp; soil</div>
+      </div>
+    </a>
+
+    <nav aria-label="Main navigation">
+      <a href="{{ url_for('home') }}" class="{% if request.path=='/' %}active{% endif %}">Home</a>
+      <a href="{{ url_for('crops') }}" class="{% if request.path.startswith('/crops') %}active{% endif %}">Crops</a>
+      <a href="{{ url_for('soil') }}" class="{% if request.path.startswith('/soil') %}active{% endif %}">Soil</a>
+      <a href="{{ url_for('plant') }}" class="{% if request.path.startswith('/plant') %}active{% endif %}">Plant</a>
+      <a href="{{ url_for('chatbot') }}" class="{% if request.path.startswith('/chatbot') %}active{% endif %}">Chatbot</a>
+    </nav>
+
+    <div class="header-icons">
+      {% if 'username' in session %}
+        <div class="auth-buttons">
+          <a href="{{ url_for('profile') }}" class="btn small" title="Profile">Profile</a>
+          <a href="{{ url_for('logout') }}" class="btn small logout-btn">Logout</a>
+        </div>
+      {% else %}
+        <div class="auth-buttons">
+          <a href="{{ url_for('login') }}" class="btn small login-btn">Login</a>
+          <a href="{{ url_for('signup') }}" class="btn small signup-btn">Sign Up</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+ {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+<main>
+    {% block content %}{% endblock %}
+</main>
+</body>
+</html>
