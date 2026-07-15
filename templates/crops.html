@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="page-container">
+
+  <!-- Page header -->
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.75rem;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="width: 44px; height: 44px; background: #e6f4ea; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #2e5c2e; flex-shrink: 0;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 22 16 8"/><path d="M3.47 12.53 5 14l1.53-1.47"/><path d="M6.41 9.59 8 11l1.53-1.47"/><path d="M9.47 6.53 11 8l1.53-1.47"/><path d="M12.41 3.59 14 5l1.53-1.47"/><path d="M20.53 3.47 19 5l-1.47 1.53"/><path d="M17.59 6.41 16 8l-1.41 1.59"/><path d="M14.53 9.47 13 11l-1.47 1.53"/><path d="M11.59 12.41 10 14l-1.41 1.59"/></svg>
+      </div>
+      <div>
+        <h1 class="page-title" style="margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.8rem; font-weight: 800; color: #0d2b18; letter-spacing: -0.03em;">Crops of India</h1>
+        <p class="page-sub" style="margin: 0;">Click any card to flip and view soil needs, diseases, and treatment recommendations.</p>
+      </div>
+    </div>
+    <div style="font-size: 0.82rem; color: #6b7280; font-weight: 500;">
+      {{ crops | length if crops is defined else '40' }}+ crops listed
+    </div>
+  </div>
+
+  <!-- Search bar -->
+  <div style="position: relative; max-width: 480px; margin-bottom: 2rem;">
+    <svg style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#9ca3af; pointer-events:none;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="cropSearch" placeholder="Search crops…"
+      style="width:100%; padding:10px 16px 10px 42px; border:1.5px solid rgba(0,0,0,0.10); border-radius:9999px; font-size:0.875rem; font-family:inherit; outline:none; background:#fff; transition:border-color 0.15s, box-shadow 0.15s; box-sizing:border-box;"
+      onfocus="this.style.borderColor='#2e5c2e'; this.style.boxShadow='0 0 0 3px rgba(45,94,46,0.10)';"
+      onblur="this.style.borderColor='rgba(0,0,0,0.10)'; this.style.boxShadow='';">
+  </div>
+
+  <!-- Crop grid -->
+  <div class="crop-grid" id="cropGrid">
+
+    {% set crops = [
+      {'key':'cotton','name':'Cotton','soil':'Black/Loamy','irrigation':'Medium','season':'Kharif','diseases':['Bacterial blight','Cotton bollworm'],'pesticides':['Emamectin benzoate','Chlorantraniliprole']},
+      {'key':'groundnut','name':'Groundnut','soil':'Sandy loam','irrigation':'Low to Medium','season':'Kharif','diseases':['Leaf spot','Rust'],'pesticides':['Mancozeb','Carbendazim']},
+      {'key':'sunflower','name':'Sunflower','soil':'Loamy, well drained','irrigation':'Low to Medium','season':'Rabi/Kharif','diseases':['Downy mildew','Rust'],'pesticides':['Metalaxyl','Mancozeb']},
+      {'key':'soybean','name':'Soybean','soil':'Black/Loamy','irrigation':'Medium','season':'Kharif','diseases':['Rust','Yellow mosaic virus'],'pesticides':['Propiconazole','Imidacloprid']},
+      {'key':'sugarcane','name':'Sugarcane','soil':'Alluvial/Loamy','irrigation':'High','season':'Annual','diseases':['Red rot','Wilt'],'pesticides':['Carbendazim','Chlorpyrifos']},
+      {'key':'maize','name':'Maize','soil':'Loamy,Sandy loam','irrigation':'Medium','season':'Kharif/Rabi','diseases':['Downy mildew','Stem borer'],'pesticides':['Carbofuran','Azadirachtin']},
+      {'key':'jowar','name':'Jowar (Sorghum)','soil':'Red/Black','irrigation':'Low to Medium','season':'Kharif','diseases':['Ergot','Shoot fly'],'pesticides':['Zineb','Lambda-cyhalothrin']},
+      {'key':'wheat','name':'Wheat','soil':'Alluvial/Loamy','irrigation':'Medium','season':'Rabi','diseases':['Rust','Powdery mildew'],'pesticides':['Tebuconazole','Carbendazim']},
+      {'key':'ragi','name':'Ragi (Finger millet)','soil':'Red/Sandy loam','irrigation':'Low','season':'Kharif','diseases':['Blast','Shoot fly'],'pesticides':['Hexaconazole','Malathion']},
+      {'key':'bajra','name':'Bajra (Pearl millet)','soil':'Sandy/Loamy','irrigation':'Low','season':'Kharif','diseases':['Downy mildew','Ergot'],'pesticides':['Metalaxyl','Zineb']},
+      {'key':'castor','name':'Castor','soil':'Loamy,Sandy','irrigation':'Low','season':'Kharif/Rabi','diseases':['Alternaria leaf spot','Wilt'],'pesticides':['Copper oxychloride','Carbendazim']},
+      {'key':'rice','name':'Rice','soil':'Clay/Alluvial','irrigation':'High','season':'Kharif/Rabi','diseases':['Blast','Sheath blight'],'pesticides':['Tricyclazole','Carbendazim']},
+      {'key':'mustard','name':'Mustard','soil':'Loamy','irrigation':'Low to Medium','season':'Rabi','diseases':['White rust','Alternaria'],'pesticides':['Mancozeb','Carbendazim']},
+      {'key':'jute','name':'Jute','soil':'Alluvial','irrigation':'High','season':'Kharif','diseases':['Stem rot','Root rot'],'pesticides':['Copper oxychloride','Mancozeb']},
+      {'key':'barley','name':'Barley','soil':'Loamy','irrigation':'Low to Medium','season':'Rabi','diseases':['Leaf rust','Powdery mildew'],'pesticides':['Propiconazole','Sulphur']},
+      {'key':'potato','name':'Potato','soil':'Loamy,Sandy loam','irrigation':'Medium to High','season':'Rabi','diseases':['Late blight','Common scab'],'pesticides':['Metalaxyl','Chlorothalonil']},
+      {'key':'onion','name':'Onion','soil':'Loamy','irrigation':'Medium','season':'Rabi/Kharif','diseases':['Downy mildew','Stemphylium leaf blight'],'pesticides':['Mancozeb','Mefenoxam']},
+      {'key':'tomato','name':'Tomato','soil':'Loamy','irrigation':'Medium','season':'Kharif/Rabi','diseases':['Early blight','Bacterial spot'],'pesticides':['Copper oxychloride','Mancozeb']},
+      {'key':'banana','name':'Banana','soil':'Loamy,well drained','irrigation':'High','season':'Annual','diseases':['Panama wilt','Sigatoka'],'pesticides':['Carbendazim','Bacillus thuringiensis']},
+      {'key':'mango','name':'Mango','soil':'Loamy/Red','irrigation':'Low to Medium','season':'Summer','diseases':['Powdery mildew','Anthracnose'],'pesticides':['Copper oxychloride','Carbendazim']},
+      {'key':'tea','name':'Tea','soil':'Loamy, acidic','irrigation':'High','season':'Perennial','diseases':['Blister blight','Root rot'],'pesticides':['Copper fungicide','Carbendazim']},
+      {'key':'coffee','name':'Coffee','soil':'Loamy, well-drained','irrigation':'Medium','season':'Perennial','diseases':['Coffee rust','Berry borer'],'pesticides':['Hexaconazole','Chlorpyrifos']},
+      {'key':'rubber','name':'Rubber','soil':'Loamy, alluvial','irrigation':'High','season':'Perennial','diseases':['Powdery mildew','Leaf fall'],'pesticides':['Copper oxychloride','Carbendazim']},
+      {'key':'coconut','name':'Coconut','soil':'Sandy/Loamy','irrigation':'Medium to High','season':'Perennial','diseases':['Bud rot','Leaf blight'],'pesticides':['Tridemorph','Copper oxychloride']},
+      {'key':'pepper','name':'Pepper','soil':'Loamy, well-drained','irrigation':'Medium','season':'Perennial','diseases':['Quick wilt','Anthracnose'],'pesticides':['Metalaxyl','Carbendazim']},
+      {'key':'cardamom','name':'Cardamom','soil':'Loamy, humus-rich','irrigation':'High','season':'Perennial','diseases':['Katte disease','Chenthal wilt'],'pesticides':['Copper oxychloride','Carbendazim']},
+      {'key':'turmeric','name':'Turmeric','soil':'Loamy, well-drained','irrigation':'Medium','season':'Kharif','diseases':['Leaf blotch','Rhizome rot'],'pesticides':['Mancozeb','Copper fungicide']},
+      {'key':'ginger','name':'Ginger','soil':'Loamy, sandy loam','irrigation':'Medium','season':'Kharif','diseases':['Soft rot','Leaf spot'],'pesticides':['Metalaxyl','Mancozeb']},
+      {'key':'chillies','name':'Chillies','soil':'Loamy, black','irrigation':'Medium','season':'Kharif/Rabi','diseases':['Leaf curl','Powdery mildew'],'pesticides':['Imidacloprid','Sulphur']},
+      {'key':'tobacco','name':'Tobacco','soil':'Sandy loam','irrigation':'Low to Medium','season':'Rabi/Kharif','diseases':['Root rot','Leaf spot'],'pesticides':['Copper oxychloride','Mancozeb']},
+      {'key':'grapes','name':'Grapes','soil':'Loamy, black cotton','irrigation':'Medium to High','season':'Summer','diseases':['Downy mildew','Powdery mildew'],'pesticides':['Sulphur','Metalaxyl']},
+      {'key':'guava','name':'Guava','soil':'Loamy, sandy loam','irrigation':'Medium','season':'Summer/Winter','diseases':['Wilt','Anthracnose'],'pesticides':['Copper fungicide','Carbendazim']},
+      {'key':'papaya','name':'Papaya','soil':'Loamy, well-drained','irrigation':'Medium','season':'Perennial','diseases':['Papaya mosaic','Anthracnose'],'pesticides':['Imidacloprid','Copper fungicide']},
+      {'key':'pineapple','name':'Pineapple','soil':'Loamy, sandy','irrigation':'Medium','season':'Perennial','diseases':['Heart rot','Wilt'],'pesticides':['Copper oxychloride','Metalaxyl']},
+      {'key':'apple','name':'Apple','soil':'Loamy, well-drained','irrigation':'Medium to High','season':'Winter','diseases':['Apple scab','Powdery mildew'],'pesticides':['Sulphur','Captan']},
+      {'key':'pears','name':'Pears','soil':'Loamy, clay loam','irrigation':'Medium','season':'Winter','diseases':['Fire blight','Scab'],'pesticides':['Streptomycin','Sulphur']},
+      {'key':'litchi','name':'Litchi','soil':'Loamy, alluvial','irrigation':'Medium','season':'Summer','diseases':['Fruit rot','Wilt'],'pesticides':['Copper oxychloride','Mancozeb']},
+      {'key':'watermelon','name':'Watermelon','soil':'Sandy loam','irrigation':'Medium to High','season':'Summer','diseases':['Fusarium wilt','Downy mildew'],'pesticides':['Carbendazim','Metalaxyl']},
+      {'key':'muskmelon','name':'Muskmelon','soil':'Sandy loam','irrigation':'Medium','season':'Summer','diseases':['Powdery mildew','Fusarium wilt'],'pesticides':['Sulphur','Carbendazim']},
+      {'key':'cucumber','name':'Cucumber','soil':'Loamy, sandy loam','irrigation':'Medium','season':'Summer','diseases':['Downy mildew','Anthracnose'],'pesticides':['Copper fungicide','Metalaxyl']}
+    ] %}
+
+    {% for crop in crops %}
+    <article class="crop-card" data-name="{{ crop.name | lower }}" tabindex="0" role="button" aria-pressed="false" aria-label="{{ crop.name }} — click to flip">
+      <div class="card-inner">
+
+        <!-- Front -->
+        <div class="card-front">
+          <img src="{{ url_for('static', filename='crop_images/' ~ crop.key ~ '.png') }}"
+               alt="{{ crop.name }}"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div class="img-placeholder" style="display:none; color: #2e5c2e;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22v-4"/><path d="M12 18H8.5a4 4 0 0 1-4-4c0-2.5 2-4.5 4.5-4.5H12"/><path d="M12 18h3.5a4 4 0 0 0 4-4c0-2.5-2-4.5-4.5-4.5H12"/><path d="M12 10V6.5A4.5 4.5 0 0 0 7.5 2"/><path d="M12 10V6.5A4.5 4.5 0 0 1 16.5 2"/></svg>
+          </div>
+          <h4>{{ crop.name }}</h4>
+          <span style="font-size:0.72rem; color:#9ca3af; margin-top:2px;">Tap to view details</span>
+        </div>
+
+        <!-- Back -->
+        <div class="card-back">
+          <h4>{{ crop.name }}</h4>
+          <ul class="info-list" style="display: flex; flex-direction: column; gap: 4px;">
+            <li style="display: flex; align-items: center; gap: 6px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #2e5c2e; flex-shrink: 0;"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg> <span><strong>Soil:</strong> {{ crop.soil }}</span></li>
+            <li style="display: flex; align-items: center; gap: 6px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #2e5c2e; flex-shrink: 0;"><path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-11-7-11S5 10.7 5 15a7 7 0 0 0 7 7z"/></svg> <span><strong>Irrigation:</strong> {{ crop.irrigation }}</span></li>
+            <li style="display: flex; align-items: center; gap: 6px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #2e5c2e; flex-shrink: 0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> <span><strong>Season:</strong> {{ crop.season }}</span></li>
+            <li style="margin-top:2px;">
+              <span style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #2e5c2e; flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24 4.24"/><path d="m14.83 14.83-9.9-9.9"/></svg> <strong>Diseases:</strong></span>
+              <ul style="margin:2px 0 0 12px; padding-left:14px;">
+                {% for d in crop.diseases %}<li>{{ d }}</li>{% endfor %}
+              </ul>
+            </li>
+            <li style="margin-top:2px;">
+              <span style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #2e5c2e; flex-shrink: 0;"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg> <strong>Pesticides:</strong></span>
+              <ul style="margin:2px 0 0 12px; padding-left:14px;">
+                {% for p in crop.pesticides %}<li>{{ p }}</li>{% endfor %}
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+    </article>
+    {% endfor %}
+
+    <!-- No results -->
+    <div id="noResults" style="display:none; grid-column:1/-1; text-align:center; padding:3rem 1rem; color:#9ca3af;">
+      <div style="margin-bottom:0.75rem; color: #2e5c2e; display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: #e6f4ea; border-radius: 50%;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 22 16 8"/><path d="M3.47 12.53 5 14l1.53-1.47"/><path d="M6.41 9.59 8 11l1.53-1.47"/><path d="M9.47 6.53 11 8l1.53-1.47"/><path d="M12.41 3.59 14 5l1.53-1.47"/><path d="M20.53 3.47 19 5l-1.47 1.53"/><path d="M17.59 6.41 16 8l-1.41 1.59"/><path d="M14.53 9.47 13 11l-1.47 1.53"/><path d="M11.59 12.41 10 14l-1.41 1.59"/></svg>
+      </div>
+      <p style="font-size:1rem; font-weight:600; color:#6b7280; margin:0 0 4px;">No crops found</p>
+      <p style="font-size:0.85rem; margin:0;">Try a different search term</p>
+    </div>
+
+  </div><!-- /crop-grid -->
+</div><!-- /page-container -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  /* Flip on click / keyboard */
+  document.querySelectorAll('.crop-card').forEach(card => {
+    card.addEventListener('click', () => card.classList.toggle('flipped'));
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.classList.toggle('flipped'); }
+    });
+  });
+
+  /* Live search */
+  document.getElementById('cropSearch').addEventListener('input', function () {
+    const q = this.value.toLowerCase().trim();
+    let any = false;
+    document.querySelectorAll('.crop-card').forEach(card => {
+      const match = card.dataset.name.includes(q);
+      card.style.display = match ? '' : 'none';
+      if (match) any = true;
+    });
+    document.getElementById('noResults').style.display = any ? 'none' : 'block';
+  });
+});
+</script>
+
+{% endblock %}

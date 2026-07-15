@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-container" style="max-width: 1200px; margin: 3rem auto; padding: 0 1.5rem;">
+    
+    <div style="text-align: center; margin-bottom: 3rem;">
+        <h2 class="page-title" style="font-family: 'Poppins', sans-serif; font-size: 2.25rem; font-weight: 700; color: #1a4c1b;">Admin Dashboard</h2>
+        <p class="page-sub" style="font-size: 1.1rem; color: #555; max-width: 600px; margin: 0.5rem auto 0;">View and manage all registered farmers in the AgriSmart ecosystem.</p>
+    </div>
+
+    <!-- Users Table Card -->
+    <div style="background: #ffffff; padding: 2rem; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(26,76,27,0.06); overflow-x: auto;">
+        <h3 style="margin: 0 0 1.5rem 0; font-family: 'Poppins', sans-serif; font-size: 1.4rem; color: #1a4c1b; font-weight: 600;">Registered Farmers ({{ users|length }})</h3>
+
+        {% if users %}
+        <table style="width: 100%; border-collapse: collapse; min-width: 800px; font-family: 'Inter', sans-serif;">
+            <thead>
+                <tr style="border-bottom: 2px solid rgba(26,76,27,0.1); text-align: left;">
+                    <th style="padding: 1rem; color: #1a4c1b; font-weight: 700;">Avatar</th>
+                    <th style="padding: 1rem; color: #1a4c1b; font-weight: 700;">Full Name</th>
+                    <th style="padding: 1rem; color: #1a4c1b; font-weight: 700;">Username</th>
+                    <th style="padding: 1rem; color: #1a4c1b; font-weight: 700;">Email</th>
+                    <th style="padding: 1rem; color: #1a4c1b; font-weight: 700;">Phone</th>
+                    <th style="padding: 1rem; color: #1a4c1b; font-weight: 700;">Location</th>
+                    <th style="padding: 1rem; color: #1a4c1b; font-weight: 700;">Farming Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr style="border-bottom: 1px solid rgba(0,0,0,0.05); transition: background 0.2s;" onmouseenter="this.style.background='rgba(26,76,27,0.02)'" onmouseleave="this.style.background='transparent'">
+                    <td style="padding: 1rem;">
+                        <img src="{{ url_for('static', filename=u.profile_pic) if u.profile_pic else url_for('static', filename='icons/user.svg') }}" 
+                             alt="User Avatar" 
+                             style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(26,76,27,0.1); background: #f0f0f0;">
+                    </td>
+                    <td style="padding: 1rem; font-weight: 600; color: #333;">{{ u.display_name }}</td>
+                    <td style="padding: 1rem; color: #555;">{{ u.username }}</td>
+                    <td style="padding: 1rem; color: #555;">{{ u.email or '—' }}</td>
+                    <td style="padding: 1rem; color: #555;">{{ u.phone or '—' }}</td>
+                    <td style="padding: 1rem; color: #555;">
+                        {% if u.district and u.state %}
+                            {{ u.district }}, {{ u.state }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem; color: #555; font-size: 0.9rem; line-height: 1.4;">
+                        <strong>Type:</strong> {{ u.farming_type or '—' }}<br>
+                        <strong>Size:</strong> {{ u.land_size or '—' }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align: center; padding: 3rem; color: #777; font-size: 1.1rem;">
+            No users registered in the system yet.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

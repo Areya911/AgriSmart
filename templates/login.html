@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem;">
+
+  <div style="width: 100%; max-width: 440px;">
+
+    <!-- Card -->
+    <div style="background: #fff; border: 1px solid rgba(0,0,0,0.06); border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); padding: 2.5rem;">
+
+      <!-- Header -->
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <div style="width: 52px; height: 52px; background: #e6f4ea; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem; color: #2e5c2e;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22v-4"/><path d="M12 18H8.5a4 4 0 0 1-4-4c0-2.5 2-4.5 4.5-4.5H12"/><path d="M12 18h3.5a4 4 0 0 0 4-4c0-2.5-2-4.5-4.5-4.5H12"/><path d="M12 10V6.5A4.5 4.5 0 0 0 7.5 2"/><path d="M12 10V6.5A4.5 4.5 0 0 1 16.5 2"/></svg>
+        </div>
+        <h1 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.6rem; font-weight: 800; color: #0d2b18; margin: 0 0 0.35rem 0; letter-spacing: -0.03em;">Welcome back</h1>
+        <p style="font-size: 0.875rem; color: #6b7280; margin: 0;">Sign in to your AgriSmart account</p>
+      </div>
+
+      <!-- Role toggle -->
+      <div style="display: flex; background: #f0f4f0; border-radius: 10px; padding: 4px; margin-bottom: 1.5rem;" role="group" aria-label="Login role">
+        <label id="label-farmer" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 0.82rem; font-weight: 600; background: #1a4c1b; color: #fff; transition: all 0.2s;">
+          <input type="radio" name="role" value="farmer" form="loginForm" checked style="display: none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><path d="M2 22 16 8"/><path d="M3.47 12.53 5 14l1.53-1.47"/><path d="M6.41 9.59 8 11l1.53-1.47"/><path d="M9.47 6.53 11 8l1.53-1.47"/><path d="M12.41 3.59 14 5l1.53-1.47"/><path d="M20.53 3.47 19 5l-1.47 1.53"/><path d="M17.59 6.41 16 8l-1.41 1.59"/><path d="M14.53 9.47 13 11l-1.47 1.53"/><path d="M11.59 12.41 10 14l-1.41 1.59"/></svg>
+          Farmer
+        </label>
+        <label id="label-admin" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: #6b7280; transition: all 0.2s;">
+          <input type="radio" name="role" value="admin" form="loginForm" style="display: none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          Admin
+        </label>
+      </div>
+
+      <!-- Form -->
+      <form method="POST" id="loginForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div style="margin-bottom: 1rem;">
+          <label for="username" style="display: block; font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 0.4rem;">Username or Email</label>
+          <input type="text" name="username" id="username" placeholder="Enter username or email" required
+            style="width: 100%; padding: 10px 14px; border: 1.5px solid rgba(0,0,0,0.10); border-radius: 10px; font-size: 0.9rem; font-family: inherit; outline: none; transition: border-color 0.15s, box-shadow 0.15s; box-sizing: border-box;"
+            onfocus="this.style.borderColor='#2e5c2e'; this.style.boxShadow='0 0 0 3px rgba(45,94,46,0.1)';"
+            onblur="this.style.borderColor='rgba(0,0,0,0.10)'; this.style.boxShadow='none';">
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+          <label for="password" style="display: block; font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 0.4rem;">Password</label>
+          <div style="position: relative;">
+            <input type="password" name="password" id="password" placeholder="Enter password" required
+              style="width: 100%; padding: 10px 42px 10px 14px; border: 1.5px solid rgba(0,0,0,0.10); border-radius: 10px; font-size: 0.9rem; font-family: inherit; outline: none; transition: border-color 0.15s, box-shadow 0.15s; box-sizing: border-box;"
+              onfocus="this.style.borderColor='#2e5c2e'; this.style.boxShadow='0 0 0 3px rgba(45,94,46,0.1)';"
+              onblur="this.style.borderColor='rgba(0,0,0,0.10)'; this.style.boxShadow='none';">
+            <button type="button" id="togglePwd"
+              style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#9ca3af; padding:0; width:auto; font-size:1rem; line-height:1;"
+              onclick="const p=document.getElementById('password'); p.type=p.type==='password'?'text':'password'; this.textContent=p.type==='password'?'👁':'🙈';">👁</button>
+          </div>
+        </div>
+
+        <button type="submit"
+          style="width: 100%; padding: 12px; background: #1a4c1b; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.95rem; font-weight: 700; border: none; border-radius: 10px; cursor: pointer; transition: all 0.15s; letter-spacing: -0.01em;"
+          onmouseover="this.style.background='#2e5c2e'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(26,76,27,0.2)';"
+          onmouseout="this.style.background='#1a4c1b'; this.style.transform=''; this.style.boxShadow='';">
+          Sign In →
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div style="display: flex; align-items: center; gap: 12px; margin: 1.5rem 0;">
+        <div style="flex: 1; height: 1px; background: rgba(0,0,0,0.06);"></div>
+        <span style="font-size: 0.75rem; color: #9ca3af; font-weight: 500;">or continue with</span>
+        <div style="flex: 1; height: 1px; background: rgba(0,0,0,0.06);"></div>
+      </div>
+
+      <!-- Google -->
+      <a href="{{ url_for('oauth_google') }}"
+        style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 10px; border: 1.5px solid rgba(0,0,0,0.10); border-radius: 10px; font-size: 0.875rem; font-weight: 600; color: #374151; background: #fff; text-decoration: none; transition: all 0.15s; box-sizing: border-box;"
+        onmouseover="this.style.background='#f9fafb'; this.style.borderColor='rgba(0,0,0,0.18)';"
+        onmouseout="this.style.background='#fff'; this.style.borderColor='rgba(0,0,0,0.10)';">
+        <img src="{{ url_for('static', filename='google_logo.png') }}" alt="Google" style="height: 18px; display: block;">
+        Sign in with Google
+      </a>
+
+      <!-- Footer -->
+      <p style="text-align: center; margin-top: 1.5rem; font-size: 0.82rem; color: #6b7280;">
+        Don't have an account? <a href="{{ url_for('signup') }}" style="color: #1a4c1b; font-weight: 700; text-decoration: none;">Sign Up</a>
+      </p>
+    </div><!-- /card -->
+
+  </div>
+</div>
+
+<script>
+  // Role toggle styling
+  const labelFarmer = document.getElementById('label-farmer');
+  const labelAdmin  = document.getElementById('label-admin');
+  const radios      = document.querySelectorAll('input[name="role"]');
+
+  radios.forEach(radio => {
+    radio.addEventListener('change', function() {
+      if (this.value === 'farmer') {
+        labelFarmer.style.background = '#1a4c1b';
+        labelFarmer.style.color      = '#fff';
+        labelAdmin.style.background  = 'transparent';
+        labelAdmin.style.color       = '#6b7280';
+      } else {
+        labelAdmin.style.background  = '#1a4c1b';
+        labelAdmin.style.color       = '#fff';
+        labelFarmer.style.background = 'transparent';
+        labelFarmer.style.color      = '#6b7280';
+      }
+    });
+  });
+</script>
+{% endblock %}

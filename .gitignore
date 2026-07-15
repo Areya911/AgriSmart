@@ -1,0 +1,30 @@
+farming-env/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.DS_Store
+*.log
+.vscode/
+*.db
+instance/
+
+# ML model weights (too large for git - use Git LFS or store externally)
+*.h5
+*.pt
+*.pth
+*.onnx
+*.pb
+*.tflite
+
+# Whisper / torch cache
+.cache/
+~/.cache/
+
+# Runtime generated files
+static/uploads/
+static/yolo_out/
+static/tts/
+static/profile_pics/

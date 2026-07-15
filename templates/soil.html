@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div style="max-width: 820px; margin: 3rem auto; padding: 0 1.5rem 4rem;">
+
+  <!-- Page header -->
+  <div style="margin-bottom: 2rem; display: flex; align-items: center; gap: 12px;">
+    <div style="width: 44px; height: 44px; background: #e6f4ea; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #2e5c2e;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
+    </div>
+    <div>
+      <h1 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.8rem; font-weight: 800; color: #0d2b18; letter-spacing: -0.03em; margin: 0;">Soil Classifier</h1>
+      <p style="font-size: 0.95rem; color: #6b7280; margin: 0;">Upload a soil image or use your camera — we'll classify the soil type and recommend the best crops.</p>
+    </div>
+  </div>
+
+  <!-- Upload card -->
+  <div style="background: #fff; border: 1px solid rgba(0,0,0,0.06); border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); padding: 2rem; margin-bottom: 1.5rem;">
+    <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 700; color: #1a4c1b; margin: 0 0 1.25rem 0; display: flex; align-items: center; gap: 8px;">
+      <span style="width: 28px; height: 28px; background: #e6f4ea; border-radius: 7px; display: inline-flex; align-items: center; justify-content: center; color: #2e5c2e;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+      </span>
+      Upload Soil Image
+    </h2>
+
+    <form method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="soil_image" style="display: block; font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">Select an image file</label>
+      <input type="file" name="soil_image" id="soil_image" accept="image/*" required
+        style="width: 100%; padding: 10px 14px; border: 1.5px dashed rgba(26,76,27,0.25); border-radius: 10px; font-size: 0.875rem; background: #f8faf8; cursor: pointer; box-sizing: border-box; color: #374151; margin-bottom: 1.25rem;">
+
+      <button type="submit"
+        style="display: inline-flex; align-items: center; gap: 8px; background: #1a4c1b; color: #fff; padding: 11px 24px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; border: none; cursor: pointer; transition: all 0.15s; box-shadow: 0 4px 16px rgba(26,76,27,0.18);"
+        onmouseover="this.style.background='#2e5c2e'; this.style.transform='translateY(-1px)';"
+        onmouseout="this.style.background='#1a4c1b'; this.style.transform='';">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Predict Soil Type
+      </button>
+    </form>
+  </div>
+
+  <!-- Divider -->
+  <div style="display: flex; align-items: center; gap: 12px; margin: 1.5rem 0;">
+    <div style="flex: 1; height: 1px; background: rgba(0,0,0,0.07);"></div>
+    <span style="font-size: 0.78rem; color: #9ca3af; font-weight: 500; white-space: nowrap;">or use your camera</span>
+    <div style="flex: 1; height: 1px; background: rgba(0,0,0,0.07);"></div>
+  </div>
+
+  <!-- Webcam card -->
+  <div style="background: #fff; border: 1px solid rgba(0,0,0,0.06); border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); padding: 2rem;">
+    <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 700; color: #1a4c1b; margin: 0 0 1.25rem 0; display: flex; align-items: center; gap: 8px;">
+      <span style="width: 28px; height: 28px; background: #e6f4ea; border-radius: 7px; display: inline-flex; align-items: center; justify-content: center; color: #2e5c2e;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+      </span>
+      Capture with Camera
+    </h2>
+
+    <video id="camera" autoplay playsinline
+      style="width: 100%; max-width: 480px; border-radius: 12px; border: 1.5px solid rgba(26,76,27,0.15); display: block; margin-bottom: 1rem; background: #f0f4f0;"></video>
+
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+      <button onclick="captureImage()"
+        style="display: inline-flex; align-items: center; gap: 8px; background: #1a4c1b; color: #fff; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 0.875rem; border: none; cursor: pointer; transition: all 0.15s;"
+        onmouseover="this.style.background='#2e5c2e';"
+        onmouseout="this.style.background='#1a4c1b';">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Capture
+      </button>
+      <span style="font-size: 0.8rem; color: #9ca3af;">Camera access required</span>
+    </div>
+
+    <canvas id="snapshot" style="display:none;"></canvas>
+    <form id="captureForm" method="POST" enctype="multipart/form-data" style="display:none; margin-top: 1rem;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="captured_image" id="captured_image">
+      <button type="submit"
+        style="display: inline-flex; align-items: center; gap: 8px; background: #2e5c2e; color: #fff; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 0.875rem; border: none; cursor: pointer; transition: all 0.15s;"
+        onmouseover="this.style.background='#1a4c1b';"
+        onmouseout="this.style.background='#2e5c2e';">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0-14 0"/><path d="M9 14h2"/><path d="M9 12a3 3 0 0 1-3-3V6a3 3 0 0 1 6 0v3a3 3 0 0 1-3 3Z"/><path d="M12 6h3a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-3"/></svg>
+        Analyse Capture
+      </button>
+    </form>
+  </div>
+
+  <!-- Result -->
+  {% if predicted_soil %}
+  <div style="margin-top: 1.5rem; background: #f6fff0; border: 1px solid rgba(26,76,27,0.15); border-left: 4px solid #1a4c1b; border-radius: 14px; padding: 1.5rem; animation: fadeIn 0.3s ease both;">
+    <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 800; color: #0d2b18; margin: 0 0 0.75rem 0; display: flex; align-items: center; gap: 8px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="color: #2e5c2e; vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>
+      Soil Analysis Result
+    </h3>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; align-items: baseline; gap: 8px;">
+        <span style="font-size: 0.82rem; font-weight: 600; color: #6b7280; min-width: 130px;">Detected Soil Type</span>
+        <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.05rem; font-weight: 800; color: #1a4c1b;">{{ predicted_soil }}</span>
+      </div>
+      {% if recommended_crops %}
+      <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;">
+        <span style="font-size: 0.82rem; font-weight: 600; color: #6b7280; min-width: 130px;">Recommended Crops</span>
+        <span style="font-size: 0.9rem; color: #374151; font-weight: 500;">{{ recommended_crops | join(' · ') }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+const video       = document.getElementById('camera');
+const canvas      = document.getElementById('snapshot');
+const captureForm = document.getElementById('captureForm');
+const ctx         = canvas.getContext('2d');
+
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then(stream => { video.srcObject = stream; })
+  .catch(err   => { console.warn('Camera unavailable:', err); });
+
+function captureImage() {
+  canvas.width  = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  document.getElementById('captured_image').value = canvas.toDataURL('image/png');
+  captureForm.style.display = 'block';
+}
+</script>
+
+<style>
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+</style>
+
+{% endblock %}

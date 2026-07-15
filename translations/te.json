@@ -1,0 +1,34 @@
+{
+  "HOME": "హోమ్",
+  "CROPS": "పంటలు",
+  "SOIL": "మట్టి",
+  "PLANT": "సస్యం",
+  "CHATBOT": "చాట్‌బాట్",
+  "CONTACT_US": "మాతో సంప్రదించండి",
+  "PROFILE": "ప్రొఫైల్",
+
+  "WELCOME_MSG": "హలో! నేను మీ వ్యవసాయ సహాయకుడు. నేను ఎలా సహాయపడగలను?",
+  "SPEAK_TO_ASSISTANT": "AgriSmartతో మాట్లాడండి",
+  "SUPPORTED_LANGS": "English / Tamil / Hindi / Telugu / Malayalam / Kannada",
+  "START_RECORDING": "రికార్డింగ్ ప్రారంభించు",
+  "STOP": "నిలిపించు",
+  "PREFERRED_LANGUAGE": "ఇష్టభాష",
+  "AUTO_DETECT": "ఆటో-డిటెక్ట్",
+
+  "TRANSCRIPT": "ట్రాన్స్క్రిప్ట్",
+  "TRANSCRIPT_NO_SPEECH": "(ఇంతవరకూ మాట లేదు)",
+
+  "QUICK_QUESTIONS": "త్వరిత ప్రశ్నలు",
+  "QQ_WHEAT_DISEASES": "గోధుమపై ఎలా రోగాలు ప్రభావితం చేస్తాయి?",
+  "QQ_SOIL_QUALITY": "మట్టిని ఎలా మెరుగుపరుచుకోవాలి?",
+
+  "LOGIN_TO_VIEW_HISTORY": "చాట్ చరిత్రను చూడడానికి దయచేసి <a href='/login'>లాగిన్</a> చేయండి. లాగిన్ అనంతరం మీ సంభాషణ సేవ్ అవుతుంది.",
+  "YOU": "మీరు",
+  "BOT": "బాట్",
+  "NO_HISTORY_YET": "ఇప్పటివరకు చాట్ చరిత్ర లేదు — బాట్‌ని ఏదైనా అడగండి అది ఇక్కడ చూపిస్తుంది.",
+
+  "ASK_PLACEHOLDER": "ఒక ప్రశ్న అడగండి...",
+  "ASK": "అడగండి",
+  "BACK_HOME": "ఇంటికి తిరిగి వెళ్ళండి",
+  "LATEST_RESPONSE": "తాజా స్పందన"
+}

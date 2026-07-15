@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div style="max-width: 820px; margin: 3rem auto; padding: 0 1.5rem 4rem;">
+
+  <!-- Page header -->
+  <div style="margin-bottom: 2rem; display: flex; align-items: center; gap: 12px;">
+    <div style="width: 44px; height: 44px; background: #e6f4ea; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #2e5c2e;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0-14 0"/><path d="M9 14h2"/><path d="M9 12a3 3 0 0 1-3-3V6a3 3 0 0 1 6 0v3a3 3 0 0 1-3 3Z"/><path d="M12 6h3a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-3"/></svg>
+    </div>
+    <div>
+      <h1 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.8rem; font-weight: 800; color: #0d2b18; letter-spacing: -0.03em; margin: 0;">Plant Disease Analyzer</h1>
+      <p style="font-size: 0.95rem; color: #6b7280; margin: 0;">Upload or capture a leaf image — our AI will detect diseases and recommend treatments.</p>
+    </div>
+  </div>
+
+  <!-- Camera status -->
+  <div id="plant_status" style="display:none; margin-bottom:1rem; padding:10px 14px; background:#fff3cd; border:1px solid #ffc107; border-radius:8px; font-size:0.85rem; color:#664d03;"></div>
+
+  <!-- Upload card -->
+  <div style="background: #fff; border: 1px solid rgba(0,0,0,0.06); border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); padding: 2rem; margin-bottom: 1.5rem;">
+    <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 700; color: #1a4c1b; margin: 0 0 1.25rem 0; display: flex; align-items: center; gap: 8px;">
+      <span style="width: 28px; height: 28px; background: #e6f4ea; border-radius: 7px; display: inline-flex; align-items: center; justify-content: center; color: #2e5c2e;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+      </span>
+      Upload Plant / Leaf Image
+    </h2>
+
+    <form method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="plant_image" style="display:block; font-size:0.82rem; font-weight:600; color:#374151; margin-bottom:0.5rem;">Select an image file</label>
+      <input type="file" name="plant_image" id="plant_image" accept="image/*" required
+        style="width:100%; padding:10px 14px; border:1.5px dashed rgba(26,76,27,0.25); border-radius:10px; font-size:0.875rem; background:#f8faf8; cursor:pointer; box-sizing:border-box; color:#374151; margin-bottom:1.25rem;">
+
+      <button type="submit"
+        style="display:inline-flex; align-items:center; gap:8px; background:#1a4c1b; color:#fff; padding:11px 24px; border-radius:10px; font-weight:700; font-size:0.9rem; border:none; cursor:pointer; transition:all 0.15s; box-shadow:0 4px 16px rgba(26,76,27,0.18);"
+        onmouseover="this.style.background='#2e5c2e'; this.style.transform='translateY(-1px)';"
+        onmouseout="this.style.background='#1a4c1b'; this.style.transform='';">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0-14 0"/><path d="M9 14h2"/><path d="M9 12a3 3 0 0 1-3-3V6a3 3 0 0 1 6 0v3a3 3 0 0 1-3 3Z"/><path d="M12 6h3a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-3"/></svg>
+        Analyse Image
+      </button>
+    </form>
+  </div>
+
+  <!-- Divider -->
+  <div style="display:flex; align-items:center; gap:12px; margin:1.5rem 0;">
+    <div style="flex:1; height:1px; background:rgba(0,0,0,0.07);"></div>
+    <span style="font-size:0.78rem; color:#9ca3af; font-weight:500; white-space:nowrap;">or use your camera</span>
+    <div style="flex:1; height:1px; background:rgba(0,0,0,0.07);"></div>
+  </div>
+
+  <!-- Webcam card -->
+  <div style="background:#fff; border:1px solid rgba(0,0,0,0.06); border-radius:18px; box-shadow:0 4px 20px rgba(0,0,0,0.06); padding:2rem;">
+    <h2 style="font-family:'Plus Jakarta Sans',sans-serif; font-size:1rem; font-weight:700; color:#1a4c1b; margin:0 0 1.25rem 0; display:flex; align-items:center; gap:8px;">
+      <span style="width:28px; height:28px; background:#e6f4ea; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; color:#2e5c2e;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+      </span>
+      Capture with Camera
+    </h2>
+
+    <video id="plant_camera" autoplay playsinline
+      style="width:100%; max-width:480px; border-radius:12px; border:1.5px solid rgba(26,76,27,0.15); display:block; margin-bottom:1rem; background:#f0f4f0;"></video>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+      <button type="button" id="capture-btn" onclick="capturePlantImage()"
+        style="display:inline-flex; align-items:center; gap:8px; background:#1a4c1b; color:#fff; padding:10px 20px; border-radius:10px; font-weight:700; font-size:0.875rem; border:none; cursor:pointer; transition:all 0.15s;"
+        onmouseover="this.style.background='#2e5c2e';"
+        onmouseout="this.style.background='#1a4c1b';">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Capture
+      </button>
+      <span style="font-size:0.8rem; color:#9ca3af;">Camera permission required</span>
+    </div>
+
+    <canvas id="plant_snapshot" style="display:none;"></canvas>
+    <form id="plantCaptureForm" method="POST" enctype="multipart/form-data" style="display:none; margin-top:1rem;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="captured_plant_image" id="captured_plant_image">
+      <button type="submit"
+        style="display:inline-flex; align-items:center; gap:8px; background:#2e5c2e; color:#fff; padding:10px 20px; border-radius:10px; font-weight:700; font-size:0.875rem; border:none; cursor:pointer; transition:all 0.15s;"
+        onmouseover="this.style.background='#1a4c1b';"
+        onmouseout="this.style.background='#2e5c2e';">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0-14 0"/><path d="M9 14h2"/><path d="M9 12a3 3 0 0 1-3-3V6a3 3 0 0 1 6 0v3a3 3 0 0 1-3 3Z"/><path d="M12 6h3a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-3"/></svg>
+        Analyse Capture
+      </button>
+    </form>
+  </div>
+
+  <!-- Result -->
+  {% if health_status is defined and (detected_label is defined or ai_advice is defined) %}
+  <div style="margin-top:1.5rem; background:#f6fff0; border:1px solid rgba(26,76,27,0.15); border-left:4px solid #1a4c1b; border-radius:14px; padding:1.5rem; animation:fadeIn 0.3s ease both;">
+    <h3 style="font-family:'Plus Jakarta Sans',sans-serif; font-size:1.05rem; font-weight:800; color:#0d2b18; margin:0 0 1.25rem 0; display:flex; align-items:center; gap:8px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #2e5c2e;"><path d="M4.5 10.5C5 11.5 6 13 8 13s3.5-1.5 4-2.5 1.5-2.5 4-2.5 3 1.5 3.5 2.5"/><path d="M4.5 13.5C5 12.5 6 11 8 11s3.5 1.5 4 2.5 1.5 2.5 4 2.5 3-1.5 3.5-2.5"/><path d="m6 12 1-1"/><path d="m17 12 1 1"/><path d="m12 12 1-2"/><path d="m11 14 1-1"/></svg>
+      Analysis Result
+    </h3>
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+
+      <!-- Status -->
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:0.78rem; font-weight:600; color:#6b7280; min-width:130px;">Plant Status</span>
+        {% if health_status %}
+          <span style="display:inline-flex; align-items:center; gap:6px; background:{% if 'healthy' in health_status|lower %}#f0fdf4{% else %}#fef2f2{% endif %}; color:{% if 'healthy' in health_status|lower %}#166534{% else %}#991b1b{% endif %}; padding:4px 12px; border-radius:9999px; font-size:0.82rem; font-weight:700; border:1px solid {% if 'healthy' in health_status|lower %}#bbf7d0{% else %}#fecaca{% endif %};">
+            {% if 'healthy' in health_status|lower %}
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="color: #166534; vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>
+            {% else %}
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="color: #991b1b; vertical-align: middle;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            {% endif %}
+            {{ health_status }}
+          </span>
+        {% else %}
+          <span style="color:#9ca3af; font-size:0.875rem;">Unknown</span>
+        {% endif %}
+      </div>
+
+      <!-- Disease -->
+      <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;">
+        <span style="font-size:0.78rem; font-weight:600; color:#6b7280; min-width:130px;">Disease Detected</span>
+        <div>
+          {% if detected_label %}
+            <span style="font-family:'Plus Jakarta Sans',sans-serif; font-size:1rem; font-weight:700; color:#1a4c1b;">{{ detected_label }}</span>
+            {% if confidence is defined %}
+              <span style="font-size:0.78rem; color:#9ca3af; margin-left:8px;">{{ '%.1f'|format(confidence * 100) }}% confidence</span>
+            {% endif %}
+          {% else %}
+            <span style="color:#166534; font-weight:600;">None detected — plant appears healthy</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Recommendation -->
+      {% if ai_advice %}
+      <div>
+        <span style="font-size:0.78rem; font-weight:600; color:#6b7280; display:block; margin-bottom:8px; display: flex; align-items: center; gap: 6px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #2e5c2e;"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>
+          Pesticide Recommendation
+        </span>
+        <div style="background:#fff; border:1px solid rgba(0,0,0,0.07); border-radius:10px; padding:14px 16px; font-size:0.875rem; line-height:1.7; color:#374151; white-space:pre-wrap;">{{ ai_advice | safe }}</div>
+      </div>
+      {% endif %}
+
+      <!-- Annotated image -->
+      {% if annotation_url %}
+      <div>
+        <span style="font-size:0.78rem; font-weight:600; color:#6b7280; display:block; margin-bottom:8px; display: flex; align-items: center; gap: 6px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #2e5c2e;"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+          Annotated Image
+        </span>
+        <img src="{{ annotation_url }}" alt="YOLOv8 annotated leaf"
+          style="max-width:320px; border-radius:12px; border:1px solid rgba(0,0,0,0.08); box-shadow:0 4px 16px rgba(0,0,0,0.06);">
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+  {% endif %}
+
+</div><!-- /container -->
+
+<style>
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+</style>
+
+<script>
+(() => {
+  const plantVideo       = document.getElementById('plant_camera');
+  const plantCanvas      = document.getElementById('plant_snapshot');
+  const plantCaptureForm = document.getElementById('plantCaptureForm');
+  const captureBtn       = document.getElementById('capture-btn');
+  const capturedInput    = document.getElementById('captured_plant_image');
+  const statusEl         = document.getElementById('plant_status');
+
+  function setStatus(msg) {
+    if (!statusEl) return;
+    statusEl.style.display = msg ? 'block' : 'none';
+    statusEl.textContent = msg || '';
+  }
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    setStatus('Camera not supported in this browser. Please upload an image file instead.');
+    if (captureBtn) captureBtn.disabled = true;
+    return;
+  }
+
+  let stream = null;
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(s => {
+      stream = s;
+      if (plantVideo) { plantVideo.srcObject = stream; plantVideo.play().catch(() => {}); }
+      setStatus('');
+      if (captureBtn) captureBtn.disabled = false;
+    })
+    .catch(err => {
+      console.warn('Camera:', err);
+      setStatus('Could not access camera. Allow camera permission or upload a file instead.');
+      if (captureBtn) captureBtn.disabled = true;
+    });
+
+  window.capturePlantImage = function () {
+    try {
+      const vw = plantVideo.videoWidth || 640;
+      const vh = plantVideo.videoHeight || 480;
+      if (vw === 0 || vh === 0) { setStatus('Video not ready. Try again in a moment.'); return; }
+      const maxW = 1024;
+      let outW = vw, outH = vh;
+      if (vw > maxW) { outW = maxW; outH = Math.round((maxW / vw) * vh); }
+      plantCanvas.width = outW; plantCanvas.height = outH;
+      plantCanvas.getContext('2d').drawImage(plantVideo, 0, 0, outW, outH);
+      capturedInput.value = plantCanvas.toDataURL('image/jpeg', 0.85);
+      if (plantCaptureForm) plantCaptureForm.style.display = 'block';
+      setStatus('Image captured! Click "Analyse Capture" to submit.');
+    } catch (e) {
+      console.error(e);
+      setStatus('Capture failed — please try again or upload a file.');
+    }
+  };
+
+  function stopStream() {
+    try { if (stream) stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+  }
+  window.addEventListener('beforeunload', stopStream);
+  window.addEventListener('pagehide', stopStream);
+})();
+</script>
+
+{% endblock %}

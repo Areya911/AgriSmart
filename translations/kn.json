@@ -1,0 +1,34 @@
+{
+  "HOME": "홈",
+  "CROPS": "ಬೇಳೆ / ಬೆಳೆಯು",
+  "SOIL": "ಮಣ್ಣು",
+  "PLANT": "ಸಸ್ಯ",
+  "CHATBOT": "ಚಾಟ್‌ಬಾಟ್",
+  "CONTACT_US": "ನಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಿ",
+  "PROFILE": "ಪ್ರೊಫೈಲ್",
+
+  "WELCOME_MSG": "ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ ಕೃಷಿ ಸಹಾಯಕನು. ನಾನು ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
+  "SPEAK_TO_ASSISTANT": "AgriSmart ಗೆ ಮಾತನಾಡಿ",
+  "SUPPORTED_LANGS": "English / Tamil / Hindi / Telugu / Malayalam / Kannada",
+  "START_RECORDING": "ರೆಕಾರ್ಡಿಂಗ್ ಪ್ರಾರಂಭಿಸಿ",
+  "STOP": "ನಿಲ್ಲಿಸಿ",
+  "PREFERRED_LANGUAGE": "ಆದರ್ಶ ಭಾಷೆ",
+  "AUTO_DETECT": "ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಗುರುತಿಸಿ",
+
+  "TRANSCRIPT": "ಪ್ರತಿಚರಿತ್ರೆ",
+  "TRANSCRIPT_NO_SPEECH": "(ಇನ್ನೂ ಮಾತು ಇರಲಿಲ್ಲ)",
+
+  "QUICK_QUESTIONS": "ಶೀಘ್ರ ಪ್ರಶ್ನೆಗಳು",
+  "QQ_WHEAT_DISEASES": "ಗೋಧಿ ಮೇಲೆ ಯಾವ ರೋಗಗಳು ಪರಿಣಾಮ ಬೀರಬಹುದು?",
+  "QQ_SOIL_QUALITY": "ಮಣ್ಣಿನ ಗುಣಮಟ್ಟವನ್ನು ಹೇಗೆ ಸುಧಾರಿಸಬಹುದು?",
+
+  "LOGIN_TO_VIEW_HISTORY": "ಸಂಚಾಲಿತ ಚಾಟ್ ಇತಿಹಾಸವನ್ನು ವೀಕ್ಷಿಸಲು ದಯವಿಟ್ಟು <a href='/login'>ಲಾಗಿನ್</a> ಮಾಡಿ. ನಿಮ್ಮ ಸಂಭಾಷಣೆ ಲಾಗಿನ್ ನಂತರ ಉಳಿಸಲಾಗುತ್ತದೆ.",
+  "YOU": "ನೀವು",
+  "BOT": "ಬಾಟ್",
+  "NO_HISTORY_YET": "ಈವರೆಗೆ ಚಾಟ್ ಇತಿಹಾಸವಿಲ್ಲ — ಬಾಟ್‌ಗೆ ಪ್ರಶ್ನೆ ಕೇಳಿ ಮತ್ತು ಅದು ಇಲ್ಲಿ ಕಾಣಿಸಿಕೊಳ್ಳುತ್ತದೆ.",
+
+  "ASK_PLACEHOLDER": "ಪ್ರಶ್ನೆ ಕೇಳಿ...",
+  "ASK": "ಕೇಳಿ",
+  "BACK_HOME": "ಮನೆಗೆ ಹಿಂತಿರುಗಿ",
+  "LATEST_RESPONSE": "ಇತ್ತೀಚಿನ ಪ್ರತಿಕ್ರಿಯೆ"
+}

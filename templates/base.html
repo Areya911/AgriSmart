@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriSmart — Smart Guidance for Crops &amp; Soil</title>
+    <meta name="description" content="AgriSmart is an AI-powered smart agricultural assistant providing soil classification, crop recommendations, leaf disease detection, and multilingual support.">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://smart-farming-assistant.onrender.com/">
+    <meta property="og:title" content="AgriSmart — Smart Guidance for Crops &amp; Soil">
+    <meta property="og:description" content="Empowering farmers with AI-driven insights: real-time crop selection advice, disease classification, and chatbot support.">
+    <meta property="og:image" content="{{ url_for('static', filename='farming.png', _external=True) }}">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://smart-farming-assistant.onrender.com/">
+    <meta property="twitter:title" content="AgriSmart — Smart Guidance for Crops &amp; Soil">
+    <meta property="twitter:description" content="Empowering farmers with AI-driven insights: real-time crop selection advice, disease classification, and chatbot support.">
+    <meta property="twitter:image" content="{{ url_for('static', filename='farming.png', _external=True) }}">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='icons/leaf.svg') }}">
+
+    <!-- Google Fonts: Plus Jakarta Sans (headings) + Inter (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<header>
+  <div class="header-left">
+    <a href="{{ url_for('home') }}" style="display:flex; align-items:center; gap:10px; text-decoration:none; flex-shrink:0;">
+      <img src="{{ url_for('static', filename='agrismart_logo.png') }}" alt="AgriSmart logo" class="logo">
+      <div>
+        <div class="brand-name">AgriSmart</div>
+        <div class="brand-sub">Smart guidance for crops &amp; soil</div>
+      </div>
+    </a>
+
+    <nav aria-label="Main navigation">
+      <a href="{{ url_for('home') }}"    class="{% if request.path=='/' %}active{% endif %}">Home</a>
+      <a href="{{ url_for('crops') }}"   class="{% if request.path.startswith('/crops')   %}active{% endif %}">Crops</a>
+      <a href="{{ url_for('soil') }}"    class="{% if request.path.startswith('/soil')    %}active{% endif %}">Soil</a>
+      <a href="{{ url_for('plant') }}"   class="{% if request.path.startswith('/plant')   %}active{% endif %}">Plant</a>
+      <a href="{{ url_for('chatbot') }}" class="{% if request.path.startswith('/chatbot') %}active{% endif %}">Chatbot</a>
+      <a href="{{ url_for('contact') }}" class="{% if request.path.startswith('/contact') %}active{% endif %}">Contact</a>
+    </nav>
+  </div>
+
+  <!-- Auth area -->
+  <div class="header-icons">
+    {% if 'username' in session %}
+      <div class="auth-buttons">
+        {% if session.get('is_admin') %}
+          <a href="{{ url_for('admin_dashboard') }}" class="login-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            Admin
+          </a>
+        {% else %}
+          <a href="{{ url_for('profile') }}" class="signup-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            {{ session['username'] }}
+          </a>
+        {% endif %}
+        <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+      </div>
+    {% else %}
+      <div class="auth-buttons">
+        <a href="{{ url_for('login') }}"  class="login-btn">Login</a>
+        <a href="{{ url_for('signup') }}" class="signup-btn">Sign Up</a>
+      </div>
+    {% endif %}
+  </div>
+</header>
+
+<!-- ===================== FLASH MESSAGES ===================== -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash {{ category }}" role="alert">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- ===================== MAIN CONTENT ===================== -->
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="agrismart-footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="brand-name" style="display: flex; align-items: center; gap: 8px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #2e5c2e;"><path d="M12 22v-4"/><path d="M12 18H8.5a4 4 0 0 1-4-4c0-2.5 2-4.5 4.5-4.5H12"/><path d="M12 18h3.5a4 4 0 0 0 4-4c0-2.5-2-4.5-4.5-4.5H12"/><path d="M12 10V6.5A4.5 4.5 0 0 0 7.5 2"/><path d="M12 10V6.5A4.5 4.5 0 0 1 16.5 2"/></svg>
+        AgriSmart
+      </div>
+      <p>AI-powered farming assistant for modern agriculture.</p>
+    </div>
+    <div class="footer-links">
+      <a href="{{ url_for('home') }}">Home</a>
+      <a href="{{ url_for('crops') }}">Crops</a>
+      <a href="{{ url_for('soil') }}">Soil Analysis</a>
+      <a href="{{ url_for('plant') }}">Plant Health</a>
+      <a href="{{ url_for('chatbot') }}">AI Chatbot</a>
+      <a href="{{ url_for('contact') }}">Contact</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 AgriSmart. All rights reserved.</span>
+    <span>Built with <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#2e5c2e" stroke="none" style="display: inline-block; vertical-align: middle; margin: 0 2px;"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> for farmers</span>
+  </div>
+</footer>
+
+</body>
+</html>

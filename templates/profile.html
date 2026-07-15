@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="max-width: 1100px; margin: 2.5rem auto; padding: 0 1.5rem 4rem;">
+
+  <!-- Page header -->
+  <div style="margin-bottom: 2rem; display: flex; align-items: center; gap: 12px;">
+    <div style="width: 44px; height: 44px; background: #e6f4ea; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #2e5c2e; flex-shrink: 0;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+    </div>
+    <div>
+      <h1 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.6rem; font-weight: 800; color: #0d2b18; letter-spacing: -0.03em; margin: 0;">My Profile</h1>
+      <p style="font-size: 0.875rem; color: #6b7280; margin: 0;">Manage your farming profile and view your activity history.</p>
+    </div>
+  </div>
+
+  <!-- Three-col layout -->
+  <div style="display: grid; grid-template-columns: 260px 1fr 320px; gap: 1.5rem; align-items: start;">
+
+    <!-- ====== LEFT: Avatar + Personal Info ====== -->
+    <aside aria-labelledby="personal-info-heading">
+
+      <!-- Avatar card -->
+      <div style="background:#fff; border:1px solid rgba(0,0,0,0.06); border-radius:16px; box-shadow:0 2px 10px rgba(0,0,0,0.05); padding:1.75rem; text-align:center; margin-bottom:1rem;">
+        {% set pic = (user_profile.profile_pic if user_profile and user_profile.profile_pic else None) %}
+        <div style="position:relative; display:inline-block; margin-bottom:1rem;">
+          <img id="profile_pic_img"
+               src="{{ url_for('static', filename=pic) if pic else url_for('static', filename='icons/user.svg') }}"
+               alt="Profile photo"
+               style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid rgba(26,76,27,0.12); background:#f0f4f0;">
+          <div style="position:absolute; bottom:0; right:0; width:26px; height:26px; background:#1a4c1b; border-radius:50%; border:2px solid #fff; display:flex; align-items:center; justify-content:center; color:#fff; cursor: pointer;"
+               onclick="window.location.href='{{ url_for('edit_profile') }}';">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </div>
+        </div>
+        <h2 id="personal-info-heading" style="font-family:'Plus Jakarta Sans',sans-serif; font-size:1rem; font-weight:800; color:#0d2b18; margin:0 0 2px;">
+          {{ user_profile.display_name or session.get('username') }}
+        </h2>
+        <p style="font-size:0.78rem; color:#6b7280; margin:0 0 1rem;">@{{ session.get('username') }}</p>
+        <a href="{{ url_for('edit_profile') }}" id="editProfileBtn"
+           style="display:inline-flex; align-items:center; gap:6px; background:#1a4c1b; color:#fff; padding:8px 18px; border-radius:8px; font-size:0.82rem; font-weight:700; text-decoration:none; transition:all 0.15s;"
+           onmouseover="this.style.background='#2e5c2e';" onmouseout="this.style.background='#1a4c1b';">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          Edit Profile
+        </a>
+      </div>
+
+      <!-- Personal info card -->
+      <div style="background:#fff; border:1px solid rgba(0,0,0,0.06); border-radius:16px; box-shadow:0 2px 10px rgba(0,0,0,0.05); padding:1.5rem;">
+        <h3 style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.875rem; font-weight:700; color:#1a4c1b; margin:0 0 1rem 0; padding-bottom:0.6rem; border-bottom:1px solid rgba(26,76,27,0.08);">Personal Details</h3>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          {% set info_rows = [
+            ('Email', user_profile.email or session.get('email','-')),
+            ('Phone', user_profile.phone or session.get('phone','-')),
+            ('Language', (user_profile.language if (user_profile and user_profile.language) else session.get('language','en'))),
+            ('Location', (user_profile.district ~ ', ' ~ user_profile.state) if (user_profile and user_profile.district and user_profile.state) else 'Not set'),
+          ] %}
+          {% for label, value in info_rows %}
+          <div style="display:flex; flex-direction:column; gap:2px;">
+            <span style="font-size:0.72rem; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.04em;">{{ label }}</span>
+            <span style="font-size:0.875rem; color:#374151; font-weight:500;">{{ value }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </aside><!-- /left -->
+
+    <!-- ====== CENTER: Farming Preferences ====== -->
+    <main aria-labelledby="prefs-heading">
+      <div style="background:#fff; border:1px solid rgba(0,0,0,0.06); border-radius:16px; box-shadow:0 2px 10px rgba(0,0,0,0.05); padding:1.75rem;">
+        <h3 id="prefs-heading" style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.95rem; font-weight:700; color:#1a4c1b; margin:0 0 1.25rem 0; padding-bottom:0.6rem; border-bottom:1px solid rgba(26,76,27,0.08); display: flex; align-items: center; gap: 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 22 16 8"/><path d="M3.47 12.53 5 14l1.53-1.47"/><path d="M6.41 9.59 8 11l1.53-1.47"/><path d="M9.47 6.53 11 8l1.53-1.47"/><path d="M12.41 3.59 14 5l1.53-1.47"/><path d="M20.53 3.47 19 5l-1.47 1.53"/><path d="M17.59 6.41 16 8l-1.41 1.59"/><path d="M14.53 9.47 13 11l-1.47 1.53"/><path d="M11.59 12.41 10 14l-1.41 1.59"/></svg>
+          Farming Preferences
+        </h3>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+          <div style="background:#f8faf8; border-radius:10px; padding:1rem;">
+            <p style="font-size:0.72rem; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.04em; margin:0 0 4px;">Land Size</p>
+            <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:1.1rem; font-weight:800; color:#0d2b18; margin:0;">{{ user_profile.land_size or '—' }}<span style="font-size:0.8rem; color:#6b7280; font-weight:500;"> acres</span></p>
+          </div>
+          <div style="background:#f8faf8; border-radius:10px; padding:1rem;">
+            <p style="font-size:0.72rem; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.04em; margin:0 0 4px;">Farming Type</p>
+            <p style="font-family:'Plus Jakarta Sans',sans-serif; font-size:1.1rem; font-weight:800; color:#0d2b18; margin:0;">{{ user_profile.farming_type or '—' }}</p>
+          </div>
+        </div>
+
+        <!-- Quick links -->
+        <h4 style="font-size:0.82rem; font-weight:700; color:#374151; margin:0 0 0.75rem 0;">Quick Actions</h4>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <a href="{{ url_for('chatbot') }}" style="display:inline-flex; align-items:center; gap:6px; background:#e6f4ea; color:#1a4c1b; padding:8px 14px; border-radius:8px; font-size:0.82rem; font-weight:600; text-decoration:none; border:1px solid rgba(26,76,27,0.12);"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 8V4H8v4"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg> Ask AgriBot</a>
+          <a href="{{ url_for('soil') }}"    style="display:inline-flex; align-items:center; gap:6px; background:#e6f4ea; color:#1a4c1b; padding:8px 14px; border-radius:8px; font-size:0.82rem; font-weight:600; text-decoration:none; border:1px solid rgba(26,76,27,0.12);"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg> Analyse Soil</a>
+          <a href="{{ url_for('plant') }}"   style="display:inline-flex; align-items:center; gap:6px; background:#e6f4ea; color:#1a4c1b; padding:8px 14px; border-radius:8px; font-size:0.82rem; font-weight:600; text-decoration:none; border:1px solid rgba(26,76,27,0.12);"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0-14 0"/><path d="M9 14h2"/><path d="M9 12a3 3 0 0 1-3-3V6a3 3 0 0 1 6 0v3a3 3 0 0 1-3 3Z"/><path d="M12 6h3a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-3"/></svg> Scan Leaf</a>
+          <a href="{{ url_for('crops') }}"   style="display:inline-flex; align-items:center; gap:6px; background:#e6f4ea; color:#1a4c1b; padding:8px 14px; border-radius:8px; font-size:0.82rem; font-weight:600; text-decoration:none; border:1px solid rgba(26,76,27,0.12);"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 22 16 8"/><path d="M3.47 12.53 5 14l1.53-1.47"/><path d="M6.41 9.59 8 11l1.53-1.47"/><path d="M9.47 6.53 11 8l1.53-1.47"/><path d="M12.41 3.59 14 5l1.53-1.47"/><path d="M20.53 3.47 19 5l-1.47 1.53"/><path d="M17.59 6.41 16 8l-1.41 1.59"/><path d="M14.53 9.47 13 11l-1.47 1.53"/><path d="M11.59 12.41 10 14l-1.41 1.59"/></svg> Crops Library</a>
+        </div>
+      </div>
+    </main><!-- /center -->
+
+    <!-- ====== RIGHT: Activity History ====== -->
+    <aside aria-labelledby="activity-heading">
+      <div style="background:#fff; border:1px solid rgba(0,0,0,0.06); border-radius:16px; box-shadow:0 2px 10px rgba(0,0,0,0.05); padding:1.75rem;">
+        <h3 id="activity-heading" style="font-family:'Plus Jakarta Sans',sans-serif; font-size:0.95rem; font-weight:700; color:#1a4c1b; margin:0 0 1.25rem 0; padding-bottom:0.6rem; border-bottom:1px solid rgba(26,76,27,0.08); display: flex; align-items: center; gap: 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+          Activity History
+        </h3>
+
+        <!-- Soil image -->
+        <div style="padding:1rem 0; border-bottom:1px solid rgba(0,0,0,0.06);">
+          <p style="font-size:0.78rem; font-weight:700; color:#374151; margin:0 0 8px;">Last Soil Upload</p>
+          {% if user_profile and user_profile.last_soil_img %}
+            <div style="display:flex; align-items:center; gap:10px;">
+              <img src="{{ url_for('static', filename='uploads/' ~ user_profile.last_soil_img) }}" alt="Soil preview"
+                   style="width:72px; height:54px; object-fit:cover; border-radius:8px; border:1px solid rgba(0,0,0,0.07); flex-shrink:0;">
+              <div>
+                <span style="display:inline-block; background:#1a4c1b; color:#fff; padding:2px 10px; border-radius:9999px; font-size:0.75rem; font-weight:600; margin-bottom:4px;">{{ user_profile.last_soil_result or '—' }}</span>
+                <p style="font-size:0.75rem; color:#9ca3af; margin:0;">{{ user_profile.last_soil_date or '' }}</p>
+              </div>
+            </div>
+          {% else %}
+            <p style="font-size:0.82rem; color:#9ca3af; margin:0;">No soil images uploaded yet</p>
+          {% endif %}
+        </div>
+
+        <!-- Leaf image -->
+        <div style="padding:1rem 0; border-bottom:1px solid rgba(0,0,0,0.06);">
+          <p style="font-size:0.78rem; font-weight:700; color:#374151; margin:0 0 8px;">Last Leaf Upload</p>
+          {% if user_profile and user_profile.last_leaf_img %}
+            <div style="display:flex; align-items:center; gap:10px;">
+              <img src="{{ url_for('static', filename='uploads/' ~ user_profile.last_leaf_img) }}" alt="Leaf preview"
+                   style="width:72px; height:54px; object-fit:cover; border-radius:8px; border:1px solid rgba(0,0,0,0.07); flex-shrink:0;">
+              <div>
+                <span style="display:inline-block; background:#1a4c1b; color:#fff; padding:2px 10px; border-radius:9999px; font-size:0.75rem; font-weight:600; margin-bottom:4px;">{{ user_profile.last_leaf_result or '—' }}</span>
+                <p style="font-size:0.75rem; color:#9ca3af; margin:0;">{{ user_profile.last_leaf_date or '' }}</p>
+              </div>
+            </div>
+          {% else %}
+            <p style="font-size:0.82rem; color:#9ca3af; margin:0;">No leaf images uploaded yet</p>
+          {% endif %}
+        </div>
+
+        <!-- Recent suggestions -->
+        <div style="padding:1rem 0 0;">
+          <p style="font-size:0.78rem; font-weight:700; color:#374151; margin:0 0 8px;">Recent Crop Suggestions</p>
+          <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px;">
+            {% for s in (user_profile.recent_suggestions_list() if user_profile and user_profile.recent_suggestions else []) %}
+              <li style="display:flex; align-items:center; gap:8px; font-size:0.82rem; color:#374151;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #2e5c2e; flex-shrink: 0;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                {{ s }}
+              </li>
+            {% else %}
+              <li style="font-size:0.82rem; color:#9ca3af;">No suggestions viewed yet</li>
+            {% endfor %}
+          </ul>
+        </div>
+
+      </div>
+    </aside><!-- /right -->
+
+  </div><!-- /grid -->
+</div>
+
+<!-- Responsive override -->
+<style>
+@media (max-width: 980px) {
+  div[style*="grid-template-columns: 260px"] { grid-template-columns: 1fr !important; }
+}
+</style>
+
+<script>
+document.getElementById('editProfileBtn')?.addEventListener('click', function(e) {
+  // default: navigate to edit_profile route
+});
+</script>
+{% endblock %}

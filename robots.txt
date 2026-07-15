@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Allow: /crops
+Allow: /contact
+Disallow: /profile
+Disallow: /chatbot
+Disallow: /logout
+Disallow: /clear_history
+
+Sitemap: https://smart-farming-assistant.onrender.com/sitemap.xml
