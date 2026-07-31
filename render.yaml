@@ -4,7 +4,7 @@ services:
     env: python
     region: singapore
     plan: free
-    buildCommand: "pip install --upgrade pip \"setuptools<70.0.0\" wheel && pip install --no-build-isolation \"openai-whisper==20240930\" && pip install -r requirements.txt"
+    buildCommand: "bash build.sh"
     startCommand: "gunicorn --workers 1 --threads 4 --timeout 180 --bind 0.0.0.0:$PORT wsgi:application"
     envVars:
       - key: PYTHON_VERSION
