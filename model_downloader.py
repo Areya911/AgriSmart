@@ -82,7 +82,11 @@ def download_models(base_dir: str = ".") -> None:
         url = f"https://drive.google.com/uc?id={gdrive_id}"
         print(f"[model_downloader] ⬇ Downloading {filename} ({info['description']}) …")
         try:
-            gdown.download(url, dest_path, quiet=False, fuzzy=True)
+            try:
+                gdown.download(id=gdrive_id, output=dest_path, quiet=False)
+            except Exception:
+                gdown.download(url=url, output=dest_path, quiet=False)
+
             if os.path.isfile(dest_path):
                 size_mb = os.path.getsize(dest_path) / (1024 * 1024)
                 print(f"[model_downloader] ✓ Saved {filename} ({size_mb:.1f} MB)")
@@ -90,6 +94,7 @@ def download_models(base_dir: str = ".") -> None:
                 print(f"[model_downloader] ✗ Download failed silently for {filename}")
         except Exception as exc:
             print(f"[model_downloader] ✗ Error downloading {filename}: {exc}")
+
 
 
 if __name__ == "__main__":
