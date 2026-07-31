@@ -1,4 +1,8 @@
-# ── Model Downloader ───────────────────────────────────────────
+# ── Build Tools (required for source builds e.g. openai-whisper) ───────────
+setuptools>=68.0.0
+wheel>=0.42.0
+
+# ── Model Downloader ───────────────────────────────────────────────────────
 gdown==5.2.0
 
 # ── Web Framework ──────────────────────────────────────────────
