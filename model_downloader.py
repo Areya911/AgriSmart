@@ -1,103 +1,93 @@
 """
 model_downloader.py
 -------------------
-Downloads trained ML model weights from Google Drive on first startup.
+Downloads trained ML model weights from Google Drive / Direct URLs on startup.
 Models are cached locally and reused on subsequent starts.
-This ensures the GitHub repo stays lean (no large binaries).
-
-USAGE: called automatically from app.py before model loading.
-
-Google Drive file IDs — update these after uploading your model files:
-  1. Open drive.google.com and upload each .h5 / .pt file
-  2. Right-click → Share → "Anyone with the link"
-  3. Copy the file ID from the URL:
-        https://drive.google.com/file/d/<FILE_ID>/view
-  4. Paste the FILE_ID below.
 """
 
 import os
 import sys
+import requests
 
-# ─────────────────────────────────────────────────────────────────────────────
-# MODEL REGISTRY
-# Update FILE_ID for each model after uploading to Google Drive.
-# ─────────────────────────────────────────────────────────────────────────────
 MODEL_REGISTRY = {
     "soil_classifier.h5": {
-        "gdrive_id": os.getenv("SOIL_MODEL_GDRIVE_ID", "YOUR_SOIL_MODEL_FILE_ID"),
+        "gdrive_id": os.getenv("SOIL_MODEL_GDRIVE_ID", ""),
+        "direct_url": os.getenv("SOIL_MODEL_URL", ""),
         "description": "Soil type CNN classifier (Keras/H5)",
     },
     "leaf_disease_mobilenet_finetuned.h5": {
-        "gdrive_id": os.getenv("LEAF_MODEL_GDRIVE_ID", "YOUR_LEAF_MODEL_FILE_ID"),
+        "gdrive_id": os.getenv("LEAF_MODEL_GDRIVE_ID", ""),
+        "direct_url": os.getenv("LEAF_MODEL_URL", ""),
         "description": "Leaf disease MobileNetV2 classifier (Keras/H5)",
     },
     "yolov8n.pt": {
-        "gdrive_id": os.getenv("YOLO_MODEL_GDRIVE_ID", "YOUR_YOLO_MODEL_FILE_ID"),
+        "gdrive_id": os.getenv("YOLO_MODEL_GDRIVE_ID", ""),
+        "direct_url": os.getenv("YOLO_MODEL_URL", "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8n.pt"),
         "description": "YOLOv8 nano plant/leaf detector (PyTorch)",
     },
 }
 
-
-def _gdown_available() -> bool:
+def _download_file_direct(url: str, dest_path: str) -> bool:
     try:
-        import gdown  # noqa: F401
-        return True
-    except ImportError:
+        print(f"[model_downloader] Downloading via HTTP: {url}")
+        response = requests.get(url, stream=True, timeout=120)
+        response.raise_for_status()
+        with open(dest_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+        return os.path.isfile(dest_path) and os.path.getsize(dest_path) > 1000
+    except Exception as e:
+        print(f"[model_downloader] HTTP download failed: {e}")
         return False
 
-
 def download_models(base_dir: str = ".") -> None:
-    """
-    Download all models in MODEL_REGISTRY that are not already cached locally.
-    Skips any model whose gdrive_id is still the placeholder string.
-    """
-    if not _gdown_available():
-        print(
-            "[model_downloader] WARNING: 'gdown' is not installed. "
-            "Run: pip install gdown\n"
-            "Skipping automatic model download."
-        )
-        return
-
-    import gdown
+    """Download all models in MODEL_REGISTRY if not already cached on disk."""
+    gdown = None
+    try:
+        import gdown as _gdown
+        gdown = _gdown
+    except ImportError:
+        pass
 
     for filename, info in MODEL_REGISTRY.items():
         dest_path = os.path.join(base_dir, filename)
-        gdrive_id = info["gdrive_id"]
 
-        # Skip if already on disk
-        if os.path.isfile(dest_path):
-            print(f"[model_downloader] ✓ Found cached: {filename}")
+        # Skip if already cached on disk and valid
+        if os.path.isfile(dest_path) and os.path.getsize(dest_path) > 1000:
+            print(f"[model_downloader] ✓ Cached model ready: {filename}")
             continue
 
-        # Skip if placeholder not yet filled in
-        if "YOUR_" in gdrive_id:
-            print(
-                f"[model_downloader] ⚠ Skipping '{filename}': "
-                f"Google Drive file ID not configured.\n"
-                f"  → Set env var or edit MODEL_REGISTRY in model_downloader.py"
-            )
-            continue
+        gdrive_id = (info.get("gdrive_id") or "").strip()
+        direct_url = (info.get("direct_url") or "").strip()
 
-        url = f"https://drive.google.com/uc?id={gdrive_id}"
-        print(f"[model_downloader] ⬇ Downloading {filename} ({info['description']}) …")
-        try:
-            try:
-                gdown.download(id=gdrive_id, output=dest_path, quiet=False)
-            except Exception:
-                gdown.download(url=url, output=dest_path, quiet=False)
+        success = False
 
-            if os.path.isfile(dest_path):
-                size_mb = os.path.getsize(dest_path) / (1024 * 1024)
-                print(f"[model_downloader] ✓ Saved {filename} ({size_mb:.1f} MB)")
-            else:
-                print(f"[model_downloader] ✗ Download failed silently for {filename}")
-        except Exception as exc:
-            print(f"[model_downloader] ✗ Error downloading {filename}: {exc}")
+        # Try Google Drive if gdrive_id is set
+        if gdrive_id and "YOUR_" not in gdrive_id:
+            print(f"[model_downloader] ⬇ Fetching {filename} from Google Drive ID: {gdrive_id}")
+            if gdown:
+                try:
+                    gdown.download(id=gdrive_id, output=dest_path, quiet=False)
+                    if os.path.isfile(dest_path) and os.path.getsize(dest_path) > 1000:
+                        success = True
+                except Exception as e:
+                    print(f"[model_downloader] gdown failed: {e}")
+            if not success:
+                # Fallback URL download for Google Drive
+                uc_url = f"https://drive.google.com/uc?export=download&id={gdrive_id}"
+                success = _download_file_direct(uc_url, dest_path)
 
+        # Try Direct URL if gdrive_id wasn't set or failed
+        if not success and direct_url:
+            success = _download_file_direct(direct_url, dest_path)
 
+        if success:
+            size_mb = os.path.getsize(dest_path) / (1024 * 1024)
+            print(f"[model_downloader] ✓ Successfully saved {filename} ({size_mb:.1f} MB)")
+        else:
+            print(f"[model_downloader] ℹ Model {filename} not configured/downloaded yet (will use robust instant fallback).")
 
 if __name__ == "__main__":
-    # Allow running standalone: python model_downloader.py
     base = sys.argv[1] if len(sys.argv) > 1 else "."
     download_models(base_dir=base)
