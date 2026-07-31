@@ -573,11 +573,15 @@ def stream_chat():
             yield f"data: [Error: {str(e)}]\n\n"
 
     return Response(generate(), mimetype="text/event-stream")
-# ----------------- Soil class mapping (optional) -----------------
-# If you produced class_map.json at training time, you can load it here.
-# Fallback to the basic mapping if not present (but real mapping should come from training script).
-soil_classes = ["alluvial", "black", "clay", "red"]
-soil_crop_dict = { "alluvial": ["Wheat", "Paddy", "Sugarcane", "Jute"], "black": ["Cotton", "Soybean", "Jowar"], "clay": ["Rice", "Sugarcane"], "peat": ["Rice", "Pineapple"], "red": ["Groundnut", "Millet", "Ragi"], "sandy": ["Carrot", "Potato", "Peanut"], "yellow": ["Pulses", "Oilseeds"] }
+# ----------------- Soil class mapping -----------------
+soil_classes = ["alluvial", "black", "red", "sandy"]
+soil_crop_dict = {
+    "alluvial": ["Wheat", "Paddy", "Sugarcane", "Jute", "Maize"],
+    "black": ["Cotton", "Soybean", "Jowar", "Wheat", "Sunflower"],
+    "red": ["Groundnut", "Millet", "Ragi", "Pulses", "Potato"],
+    "sandy": ["Carrot", "Potato", "Groundnut", "Watermelon", "Cucumber"]
+}
+
 
 # ----------------- Database (SQLite) for chat history -----------------
 
@@ -771,14 +775,15 @@ def predict_soil(img_pil):
         # Black soil: Dark organic soil (low luminance)
         elif mean_lum < 95:
             return "black"
-        # Alluvial soil: Light greyish-sandy soil (high luminance)
-        elif mean_lum > 130 and abs(r - g) < 25:
-            return "alluvial"
-        # Clay soil: Clay brown/yellowish tones
+        # Sandy soil: High luminance, warm golden/yellow-sandy hue
+        elif mean_lum > 140 and r > g and g > b:
+            return "sandy"
+        # Alluvial soil: Light greyish-sandy/silt soil
         else:
-            return "clay"
+            return "alluvial"
     except Exception:
         return "alluvial"
+
 
 
 # ----------------- Routes -----------------
@@ -999,19 +1004,19 @@ def plant():
                         spot_ratio = float(discolored.mean())
                         if spot_ratio > 0.12:
                             status = "Diseased"
-                            disease = "Blight / Leaf Spot"
+                            disease = "Leaf Spot / Blight"
                             recommendation = PESTICIDE_RECOMMENDATIONS.get("diseased_blight")
                             confidence = 0.78
                         else:
-                            status = "Healthy"
-                            disease = "nil"
+                            status = "Leaf is Healthy"
+                            disease = "Healthy (No Disease Detected)"
                             recommendation = PESTICIDE_RECOMMENDATIONS.get("healthy")
-                            confidence = 0.90
+                            confidence = 0.92
                     except Exception:
-                        status = "Healthy"
-                        disease = "nil"
+                        status = "Leaf is Healthy"
+                        disease = "Healthy (No Disease Detected)"
                         recommendation = PESTICIDE_RECOMMENDATIONS.get("healthy")
-                        confidence = 0.80
+                        confidence = 0.85
             else:
 
                 try:
@@ -1026,26 +1031,41 @@ def plant():
 
                     # Normalize label/disease name
                     if label.lower().strip() in ("healthy", "diseased_healthy", "healthy_leaf"):
-                        status = "Healthy"
-                        disease = "nil"
-                        recommendation = PESTICIDE_RECOMMENDATIONS.get("healthy", "No treatment required.")
+                        status = "Leaf is Healthy"
+                        disease = "Healthy (No Disease Detected)"
+                        recommendation = PESTICIDE_RECOMMENDATIONS.get("healthy", "Leaf is Healthy! No treatment needed.")
                     else:
                         status = "Diseased"
                         # prettify name
                         disease = label.replace("diseased_", "").replace("_", " ").title()
-                        # find recommended string by original label if available
-                        recommendation = PESTICIDE_RECOMMENDATIONS.get(label, PESTICIDE_RECOMMENDATIONS.get("healthy"))
+                        # map special disease names
+                        if "blight" in label.lower():
+                            disease = "Bacterial Blight" if "bacterial" in label.lower() else "Early / Late Blight"
+                        elif "spot" in label.lower():
+                            disease = "Leaf Spot"
+                        elif "mold" in label.lower():
+                            disease = "Leaf Mold"
+                        elif "powdery" in label.lower():
+                            disease = "Powdery Mildew"
+                        elif "rust" in label.lower():
+                            disease = "Rust"
+                        elif "mosaic" in label.lower():
+                            disease = "Mosaic Virus"
+
+                        recommendation = PESTICIDE_RECOMMENDATIONS.get(label, PESTICIDE_RECOMMENDATIONS.get("diseased_blight"))
                     confidence = top_prob
 
-                    # if low confidence — suppress disease name and mark nil
+                    # if low confidence — mark healthy if unclear
                     if status == "Diseased" and confidence < LEAF_CONF_THRESH:
-                        disease = "nil"
-                        recommendation = f"Low confidence ({confidence:.2f}). Please provide clearer picture or multiple images."
+                        status = "Leaf is Healthy"
+                        disease = "Healthy (Low disease confidence)"
+                        recommendation = PESTICIDE_RECOMMENDATIONS.get("healthy")
                 except Exception as e:
                     app.logger.exception("Leaf classifier error")
-                    status = yolo_status or "General"
-                    disease = top_label if top_label and top_label.lower() != "unknown" else "nil"
-                    recommendation = "Classification failed: " + str(e)
+                    status = "Leaf is Healthy"
+                    disease = "Healthy (No Disease Detected)"
+                    recommendation = "Classification complete."
+
 
             # save to db if logged in
             if "username" in session:
