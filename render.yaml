@@ -1,17 +1,16 @@
 services:
   - type: web
-    name: smart-farming-assistant
+    name: agrismart
     env: python
     region: singapore
     plan: free
-    pythonVersion: "3.10.14"
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT wsgi:application"
+    startCommand: "gunicorn --workers 1 --threads 4 --timeout 180 --bind 0.0.0.0:$PORT wsgi:application"
     envVars:
-      - key: FLASK_ENV
-        value: production
       - key: PYTHON_VERSION
         value: 3.10.14
+      - key: FLASK_ENV
+        value: production
       - key: GEMINI_API_KEY
         sync: false
       - key: OPENWEATHER_API_KEY
@@ -21,4 +20,10 @@ services:
       - key: ADMIN_USERNAME
         sync: false
       - key: ADMIN_PASSWORD
+        sync: false
+      - key: SOIL_MODEL_GDRIVE_ID
+        sync: false
+      - key: LEAF_MODEL_GDRIVE_ID
+        sync: false
+      - key: YOLO_MODEL_GDRIVE_ID
         sync: false

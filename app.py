@@ -522,6 +522,14 @@ except Exception as e:
     gemini_model = None
     print("Could not initialize gemini_model:", str(e))
 
+# ----------------- Auto-download models if missing (production deploy) -----------------
+# On Render / cloud: models are not in git. Download them from Google Drive on first start.
+try:
+    from model_downloader import download_models
+    download_models(base_dir=BASE_DIR)
+except Exception as _dl_err:
+    print(f"[startup] model_downloader skipped: {_dl_err}")
+
 # ----------------- Load ML models -----------------
 # Load your trained Keras model and YOLO weights (if present).
 # If models are missing, start app but gracefully handle inference errors.
@@ -532,6 +540,7 @@ try:
     print("Loaded soil_classifier.h5")
 except Exception as e:
     print("Could not load soil_classifier.h5:", e)
+
 
 try:
     yolo_model = YOLO("yolov8n.pt")
