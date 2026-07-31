@@ -573,15 +573,19 @@ def stream_chat():
             yield f"data: [Error: {str(e)}]\n\n"
 
     return Response(generate(), mimetype="text/event-stream")
-# ----------------- Soil class mapping -----------------
-soil_classes = ["alluvial", "black", "red", "sandy"]
+# ----------------- Soil class mapping (optional) -----------------
+# If you produced class_map.json at training time, you can load it here.
+# Fallback to the basic mapping if not present (but real mapping should come from training script).
+soil_classes = ["alluvial", "black", "clay", "red"]
 soil_crop_dict = {
-    "alluvial": ["Wheat", "Paddy", "Sugarcane", "Jute", "Maize"],
-    "black": ["Cotton", "Soybean", "Jowar", "Wheat", "Sunflower"],
-    "red": ["Groundnut", "Millet", "Ragi", "Pulses", "Potato"],
-    "sandy": ["Carrot", "Potato", "Groundnut", "Watermelon", "Cucumber"]
+    "alluvial": ["Wheat", "Paddy", "Sugarcane", "Jute", "Maize", "Vegetables"],
+    "black":    ["Cotton", "Soybean", "Jowar", "Sunflower", "Wheat"],
+    "clay":     ["Rice", "Sugarcane", "Jute", "Wheat", "Cabbage"],
+    "red":      ["Groundnut", "Millet", "Ragi", "Potato", "Tobacco"],
+    "sandy":    ["Carrot", "Potato", "Peanut", "Watermelon", "Cabbage"],
+    "peat":     ["Rice", "Pineapple"],
+    "yellow":   ["Pulses", "Oilseeds"],
 }
-
 
 # ----------------- Database (SQLite) for chat history -----------------
 
@@ -773,17 +777,19 @@ def predict_soil(img_pil):
         if r > g + 6 and r > b + 12:
             return "red"
         # Black soil: Dark organic soil (low luminance)
-        elif mean_lum < 95:
+        elif mean_lum < 90:
             return "black"
-        # Sandy soil: High luminance, warm golden/yellow-sandy hue
-        elif mean_lum > 140 and r > g and g > b:
-            return "sandy"
-        # Alluvial soil: Light greyish-sandy/silt soil
+        # Alluvial soil: Light brownish-grey (high luminance, balanced RGB)
+        elif mean_lum > 135 and abs(r - g) < 20:
+            return "alluvial"
+        # Clay soil: Brown-yellow tones (mid-range luminance)
+        elif mean_lum > 95 and g > b:
+            return "clay"
+        # Default to alluvial
         else:
             return "alluvial"
     except Exception:
         return "alluvial"
-
 
 
 # ----------------- Routes -----------------
@@ -1004,19 +1010,19 @@ def plant():
                         spot_ratio = float(discolored.mean())
                         if spot_ratio > 0.12:
                             status = "Diseased"
-                            disease = "Leaf Spot / Blight"
+                            disease = "Blight / Leaf Spot"
                             recommendation = PESTICIDE_RECOMMENDATIONS.get("diseased_blight")
                             confidence = 0.78
                         else:
-                            status = "Leaf is Healthy"
-                            disease = "Healthy (No Disease Detected)"
+                            status = "Healthy"
+                            disease = "nil"
                             recommendation = PESTICIDE_RECOMMENDATIONS.get("healthy")
-                            confidence = 0.92
+                            confidence = 0.90
                     except Exception:
-                        status = "Leaf is Healthy"
-                        disease = "Healthy (No Disease Detected)"
+                        status = "Healthy"
+                        disease = "nil"
                         recommendation = PESTICIDE_RECOMMENDATIONS.get("healthy")
-                        confidence = 0.85
+                        confidence = 0.80
             else:
 
                 try:
@@ -1029,43 +1035,31 @@ def plant():
                     top_prob = float(probs[top_idx])
                     label = leaf_class_map.get(str(top_idx), f"class_{top_idx}")
 
-                    # Normalize label/disease name
+                    # Normalize label/disease name using human-readable display names
                     if label.lower().strip() in ("healthy", "diseased_healthy", "healthy_leaf"):
-                        status = "Leaf is Healthy"
-                        disease = "Healthy (No Disease Detected)"
-                        recommendation = PESTICIDE_RECOMMENDATIONS.get("healthy", "Leaf is Healthy! No treatment needed.")
+                        status = "Healthy"
+                        disease = "Leaf is Healthy"
+                        recommendation = PESTICIDE_RECOMMENDATIONS.get("healthy", "No treatment required.")
                     else:
                         status = "Diseased"
-                        # prettify name
-                        disease = label.replace("diseased_", "").replace("_", " ").title()
-                        # map special disease names
-                        if "blight" in label.lower():
-                            disease = "Bacterial Blight" if "bacterial" in label.lower() else "Early / Late Blight"
-                        elif "spot" in label.lower():
-                            disease = "Leaf Spot"
-                        elif "mold" in label.lower():
-                            disease = "Leaf Mold"
-                        elif "powdery" in label.lower():
-                            disease = "Powdery Mildew"
-                        elif "rust" in label.lower():
-                            disease = "Rust"
-                        elif "mosaic" in label.lower():
-                            disease = "Mosaic Virus"
-
-                        recommendation = PESTICIDE_RECOMMENDATIONS.get(label, PESTICIDE_RECOMMENDATIONS.get("diseased_blight"))
+                        # Use human-readable name from DISEASE_DISPLAY_NAMES, fallback to prettified label
+                        disease = DISEASE_DISPLAY_NAMES.get(
+                            label,
+                            label.replace("diseased_", "").replace("_", " ").title()
+                        )
+                        recommendation = PESTICIDE_RECOMMENDATIONS.get(label, PESTICIDE_RECOMMENDATIONS.get("healthy"))
                     confidence = top_prob
 
-                    # if low confidence — mark healthy if unclear
+                    # if low confidence — suppress disease name
                     if status == "Diseased" and confidence < LEAF_CONF_THRESH:
-                        status = "Leaf is Healthy"
-                        disease = "Healthy (Low disease confidence)"
-                        recommendation = PESTICIDE_RECOMMENDATIONS.get("healthy")
+                        disease = "Undetected (low confidence)"
+                        recommendation = f"Confidence too low ({confidence:.0%}). Please upload a clearer, closer image of the leaf."
+
                 except Exception as e:
                     app.logger.exception("Leaf classifier error")
-                    status = "Leaf is Healthy"
-                    disease = "Healthy (No Disease Detected)"
-                    recommendation = "Classification complete."
-
+                    status = yolo_status or "General"
+                    disease = top_label if top_label and top_label.lower() != "unknown" else "nil"
+                    recommendation = "Classification failed: " + str(e)
 
             # save to db if logged in
             if "username" in session:
@@ -1493,18 +1487,66 @@ LEAF_CONF_THRESH = 0.30      # below this, treat disease as 'nil' (low confidenc
 leaf_model = None
 leaf_class_map = {}
 
-# Pesticide / treatment recommendations — edit to fit local/regional guidance
-PESTICIDE_RECOMMENDATIONS = {
-    "diseased_blight": "Apply copper-based fungicide at label rate. Remove severely infected leaves. Repeat every 7–14 days.",
-    "diseased_blackrot": "Use systemic fungicide and prune infected parts. Improve airflow.",
-    "diseased_leaf_curl_virus": "Viral disease — remove infected plants. Control aphid/whitefly vectors (insecticidal soap, sticky traps).",
-    "diseased_leaf_scorch": "Likely environmental — adjust watering and reduce stress. No pesticide usually required.",
-    "diseased_leafspot": "Use protectant fungicide (copper or chlorothalonil). Sanitation and removing infected leaves helps.",
-    "diseased_mosaic_virus": "Virus — remove infected plants, use virus-free seedlings, control vectors.",
-    "diseased_powdery_mildew": "Apply sulfur or potassium bicarbonate; consider systemic fungicide for severe cases.",
-    "diseased_rust": "Use contact or systemic fungicide and remove infected debris. Improve airflow.",
-    "healthy": "No treatment needed. Continue good cultural practices."
+# ── Human-readable disease display names (maps training class → user-visible label) ──────
+DISEASE_DISPLAY_NAMES = {
+    "diseased_blight":           "Early Blight / Late Blight",
+    "diseased_blackrot":         "Black Rot",
+    "diseased_leaf_curl_virus":  "Mosaic Virus / Leaf Curl",
+    "diseased_leaf_scorch":      "Bacterial Blight",
+    "diseased_leafspot":         "Leaf Spot / Leaf Mold",
+    "diseased_mosaic_virus":     "Mosaic Virus",
+    "diseased_powdery_mildew":   "Powdery Mildew",
+    "diseased_rust":             "Rust",
+    "healthy":                   "Healthy",
 }
+
+# ── Pesticide / treatment recommendations ─────────────────────────────────────────────────
+PESTICIDE_RECOMMENDATIONS = {
+    "diseased_blight":
+        "Early/Late Blight — Apply copper-based fungicide (Mancozeb or Chlorothalonil) every 7–14 days. "
+        "Remove and destroy infected leaves immediately. Avoid overhead irrigation. "
+        "Organic: Neem oil spray (2%) + copper sulphate weekly.",
+
+    "diseased_blackrot":
+        "Black Rot (fungal) — Use systemic fungicide (Thiophanate-methyl or Propiconazole). "
+        "Prune infected branches 15 cm below visible symptoms. Improve canopy airflow. "
+        "Organic: Bordeaux mixture (1%) + good drainage.",
+
+    "diseased_leaf_curl_virus":
+        "Mosaic Virus / Leaf Curl — Viral disease with no cure. Remove and destroy infected plants immediately. "
+        "Control aphid and whitefly vectors using insecticidal soap or imidacloprid spray. "
+        "Use certified virus-free seedlings next season.",
+
+    "diseased_leaf_scorch":
+        "Bacterial Blight — Apply copper bactericide (copper hydroxide or copper oxychloride). "
+        "Avoid overhead watering. Remove infected leaves and improve airflow. "
+        "Organic: Diluted Bordeaux mixture or garlic extract spray.",
+
+    "diseased_leafspot":
+        "Leaf Spot / Leaf Mold — Use protectant fungicide (copper or chlorothalonil). "
+        "Remove and dispose of fallen infected leaves. Improve spacing for airflow. "
+        "Organic: Neem oil spray (3%) or baking soda solution.",
+
+    "diseased_mosaic_virus":
+        "Mosaic Virus — Remove and destroy all infected plants immediately (no chemical cure). "
+        "Control aphid/whitefly vectors with insecticide. Use resistant varieties and virus-free seeds.",
+
+    "diseased_powdery_mildew":
+        "Powdery Mildew — Apply sulfur-based fungicide or potassium bicarbonate. "
+        "For severe cases: Tebuconazole or Triadimefon systemic fungicide. "
+        "Organic: Diluted milk spray (1:9) or neem oil weekly.",
+
+    "diseased_rust":
+        "Rust (fungal) — Apply contact fungicide (Mancozeb) or systemic (Propiconazole/Trifloxystrobin). "
+        "Remove and destroy infected debris. Avoid water on leaves. "
+        "Organic: Sulfur dust or neem oil (2%) spray.",
+
+    "healthy":
+        "✅ Leaf appears healthy! Continue good cultural practices: proper spacing, "
+        "balanced fertilisation, regular inspection for early symptoms.",
+}
+
+
 
 try:
     if os.path.isfile(LEAF_MODEL_FILE):
