@@ -1,5 +1,5 @@
 # ── Build Tools (required for source builds e.g. openai-whisper) ───────────
-setuptools>=68.0.0
+setuptools>=68.0.0,<70.0.0
 wheel>=0.42.0
 
 # ── Model Downloader ───────────────────────────────────────────────────────
