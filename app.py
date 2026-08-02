@@ -20,7 +20,8 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from werkzeug.utils import secure_filename
 from ultralytics import YOLO
-import google.generativeai as genai
+from google import genai
+from google.genai import types as genai_types
 import shutil
 from dotenv import load_dotenv
 from collections import Counter
@@ -165,16 +166,20 @@ def analyze_image_array(img_array, conf_thresh=0.20, imgsz=640):
 
         # AI advice if diseased
         advice = ""
-        if status == "Diseased" and gemini_model is not None:
+        if status == "Diseased" and gemini_client is not None:
             prompt = f"The image shows a {top_label} with a disease. Give cause, disease name, and remedies (organic + chemical)."
             try:
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as _executor:
-                    _future = _executor.submit(gemini_model.generate_content, prompt)
-                    _resp = _future.result(timeout=3.0)
-                    advice = getattr(_resp, "text", str(_resp))
+                    _future = _executor.submit(
+                        gemini_client.models.generate_content,
+                        model=gemini_model,
+                        contents=prompt
+                    )
+                    _resp = _future.result(timeout=5.0)
+                    advice = _resp.text or ""
             except Exception:
-                advice = PESTICIDE_RECOMMENDATIONS.get("diseased_blight", "Apply copper-based fungicide at label rate. Remove infected leaves.")
+                advice = PESTICIDE_RECOMMENDATIONS.get("diseased_blight", "Apply copper-based fungicide at label rate.")
 
 
         # annotate image
@@ -476,11 +481,14 @@ FFMPEG_EXEC = resolve_ffmpeg()
 
 def query_gemini_reply(user_text, lang_code=None):
     """
-    Multilingual reply helper for Gemini.
-    user_text: the transcribed speech text
+    Multilingual reply helper using the new google.genai SDK.
+    user_text: the user's chat text
     lang_code: ISO code like 'en','hi','ta','te','ml','kn'
     Returns: plain text reply in that language
     """
+    if gemini_client is None:
+        return "Chatbot is not configured. Please set a valid GEMINI_API_KEY in your .env file."
+
     hint = (lang_code or "en")[:2]
     lang_names = {
         "en": "English", "hi": "Hindi", "ta": "Tamil",
@@ -489,42 +497,37 @@ def query_gemini_reply(user_text, lang_code=None):
     lang_name = lang_names.get(hint, hint)
 
     system_prompt = (
-        "IMPORTANT: Reply exclusively in the user's language. "
-        "Do not switch to English unless the user spoke English.\n\n"
-        f"You are AgriSmart, an agricultural assistant. "
-        f"The user is speaking {lang_name} (code {hint}). "
-        "Be concise and relevant to farming."
+        f"You are AgriSmart, an expert agricultural AI assistant. "
+        f"The user is speaking {lang_name}. Reply in {lang_name} only. "
+        "Be concise, accurate, and helpful about farming, crops, soil, diseases, and agriculture."
     )
 
     try:
-        resp = gemini_model.generate_content(
-            f"{system_prompt}\n\nUser: {user_text}"
+        resp = gemini_client.models.generate_content(
+            model=gemini_model,
+            contents=f"{system_prompt}\n\nUser: {user_text}"
         )
-        reply_text = getattr(resp, "text", None) or str(resp)
-        return reply_text.strip()
+        reply_text = resp.text
+        return reply_text.strip() if reply_text else "I couldn't generate a response. Please try again."
     except Exception as e:
         current_app.logger.exception("Gemini reply failed")
-        return "Sorry — I couldn't generate a response right now."
+        return f"Sorry, the chatbot encountered an error: {str(e)}"
 
 app.query_gemini_reply = query_gemini_reply
 
 
 
-# ----------------- Configure Gemini -----------------
+# ----------------- Configure Gemini (new google.genai SDK) -----------------
 if not GEMINI_API_KEY:
     print("WARNING: GEMINI_API_KEY not found in .env. Chatbot will fail until key is configured.")
-genai.configure(api_key=GEMINI_API_KEY)
-
-# Create a Gemini model object
-# Use a stable model name you have access to
 try:
-    gemini_model = genai.GenerativeModel("gemini-1.5-flash")
-    # optional quick smoke test (comment out if noisy)
-    # test_response = gemini_model.generate_content("Say hi in one sentence.")
-    # print("Gemini Test (first words):", test_response.text[:120])
+    gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+    gemini_model = "gemini-1.5-flash"   # using 1.5-flash for free tier compatibility
+    print("Gemini client initialized with google.genai SDK (gemini-1.5-flash)")
 except Exception as e:
+    gemini_client = None
     gemini_model = None
-    print("Could not initialize gemini_model:", str(e))
+    print("Could not initialize Gemini client:", str(e))
 
 # ----------------- Auto-download models if missing (production deploy) -----------------
 # Run model downloader in a background thread so Flask starts instantly without holding Gunicorn workers
@@ -576,18 +579,8 @@ def stream_chat():
 # ----------------- Soil class mapping (optional) -----------------
 # If you produced class_map.json at training time, you can load it here.
 # Fallback to the basic mapping if not present (but real mapping should come from training script).
-# Soil classes match the CNN training order (alluvial=0, black=1, clay=2, red=3)
-# Sandy soil uses color-fallback detection since model was trained on 4 classes
 soil_classes = ["alluvial", "black", "clay", "red"]
-soil_crop_dict = {
-    "alluvial": ["Wheat", "Paddy", "Sugarcane", "Jute", "Maize"],
-    "black":    ["Cotton", "Soybean", "Jowar", "Sunflower", "Wheat"],
-    "clay":     ["Rice", "Sugarcane", "Jute", "Banana"],
-    "red":      ["Groundnut", "Millet", "Ragi", "Tobacco", "Castor"],
-    "sandy":    ["Carrot", "Potato", "Peanut", "Watermelon", "Cashew"],
-    "peat":     ["Rice", "Pineapple", "Vegetables"],
-    "yellow":   ["Pulses", "Oilseeds", "Vegetables"],
-}
+soil_crop_dict = { "alluvial": ["Wheat", "Paddy", "Sugarcane", "Jute"], "black": ["Cotton", "Soybean", "Jowar"], "clay": ["Rice", "Sugarcane"], "peat": ["Rice", "Pineapple"], "red": ["Groundnut", "Millet", "Ragi"], "sandy": ["Carrot", "Potato", "Peanut"], "yellow": ["Pulses", "Oilseeds"] }
 
 # ----------------- Database (SQLite) for chat history -----------------
 
@@ -770,32 +763,25 @@ def predict_soil(img_pil):
             print("Keras soil prediction error, using fallback:", exc)
 
     # ── High-Accuracy RGB/HSV Color Classifier Fallback ───────────────────────
-    # Detects: alluvial, black, red, sandy, clay using mean channel analysis
     try:
         arr = np.array(img_pil.convert("RGB"), dtype=np.float32)
         r, g, b = arr[:, :, 0].mean(), arr[:, :, 1].mean(), arr[:, :, 2].mean()
         mean_lum = (r + g + b) / 3.0
-        rg_diff = r - g
-        saturation = max(r, g, b) - min(r, g, b)
 
-        # Black soil: Very dark, low luminance (organic-rich dark soil)
-        if mean_lum < 80:
-            return "black"
-        # Red soil: Strong red dominance over green and blue
-        elif r > g + 10 and r > b + 18 and r > 110:
+        # Red soil: Strong red dominance
+        if r > g + 6 and r > b + 12:
             return "red"
-        # Sandy soil: Light, pale tan/beige — high luminance, low saturation, balanced RGB
-        elif mean_lum > 145 and saturation < 45 and abs(rg_diff) < 20:
-            return "sandy"
-        # Alluvial soil: Moderate brightness, grey-brown tones (fertile plains soil)
-        elif mean_lum > 100 and saturation < 60 and abs(rg_diff) < 30:
+        # Black soil: Dark organic soil (low luminance)
+        elif mean_lum < 95:
+            return "black"
+        # Alluvial soil: Light greyish-sandy soil (high luminance)
+        elif mean_lum > 130 and abs(r - g) < 25:
             return "alluvial"
-        # Clay soil: Brown/yellowish tones, moderate luminance
+        # Clay soil: Clay brown/yellowish tones
         else:
             return "clay"
     except Exception:
         return "alluvial"
-
 
 
 # ----------------- Routes -----------------
@@ -1041,28 +1027,28 @@ def plant():
                     top_prob = float(probs[top_idx])
                     label = leaf_class_map.get(str(top_idx), f"class_{top_idx}")
 
-                    # Normalize label/disease name using display name mapping
+                    # Normalize label/disease name
                     if label.lower().strip() in ("healthy", "diseased_healthy", "healthy_leaf"):
                         status = "Healthy"
-                        disease = "Leaf is Healthy"
-                        recommendation = PESTICIDE_RECOMMENDATIONS.get("healthy", "No treatment required. Continue good cultural practices.")
+                        disease = "nil"
+                        recommendation = PESTICIDE_RECOMMENDATIONS.get("healthy", "No treatment required.")
                     else:
                         status = "Diseased"
-                        # Use DISEASE_DISPLAY_NAMES for user-friendly disease name
-                        disease = DISEASE_DISPLAY_NAMES.get(label, label.replace("diseased_", "").replace("_", " ").title())
-                        recommendation = PESTICIDE_RECOMMENDATIONS.get(label, PESTICIDE_RECOMMENDATIONS.get("diseased_blight", "Apply appropriate fungicide and consult agronomist."))
+                        # prettify name
+                        disease = label.replace("diseased_", "").replace("_", " ").title()
+                        # find recommended string by original label if available
+                        recommendation = PESTICIDE_RECOMMENDATIONS.get(label, PESTICIDE_RECOMMENDATIONS.get("healthy"))
                     confidence = top_prob
 
-                    # if low confidence — suppress disease name and mark as uncertain
+                    # if low confidence — suppress disease name and mark nil
                     if status == "Diseased" and confidence < LEAF_CONF_THRESH:
-                        disease = "Uncertain — Low Confidence"
-                        recommendation = f"Confidence too low ({confidence:.0%}). Please upload a clearer, well-lit close-up image of the affected leaf."
+                        disease = "nil"
+                        recommendation = f"Low confidence ({confidence:.2f}). Please provide clearer picture or multiple images."
                 except Exception as e:
                     app.logger.exception("Leaf classifier error")
                     status = yolo_status or "General"
                     disease = top_label if top_label and top_label.lower() != "unknown" else "nil"
                     recommendation = "Classification failed: " + str(e)
-
 
             # save to db if logged in
             if "username" in session:
@@ -1491,37 +1477,16 @@ leaf_model = None
 leaf_class_map = {}
 
 # Pesticide / treatment recommendations — edit to fit local/regional guidance
-# Disease display name mapping — maps internal model class key to user-facing disease name
-DISEASE_DISPLAY_NAMES = {
-    "diseased_blight":          "Early Blight / Late Blight",
-    "diseased_blackrot":         "Bacterial Blight",
-    "diseased_leaf_curl_virus":  "Mosaic Virus / Leaf Curl Virus",
-    "diseased_leaf_scorch":      "Leaf Scorch",
-    "diseased_leafspot":         "Leaf Spot",
-    "diseased_mosaic_virus":     "Mosaic Virus",
-    "diseased_powdery_mildew":   "Powdery Mildew",
-    "diseased_rust":             "Rust",
-    "diseased_leaf_mold":        "Leaf Mold",
-    "diseased_early_blight":     "Early Blight",
-    "diseased_late_blight":      "Late Blight",
-    "diseased_bacterial_blight": "Bacterial Blight",
-    "healthy":                   "Healthy",
-}
-
 PESTICIDE_RECOMMENDATIONS = {
-    # Internal class keys (from class_map.json)
-    "diseased_blight":          "Early or Late Blight detected. Apply copper-based fungicide (Copper Oxychloride 50WP). Remove infected leaves immediately. Spray every 7–10 days. Avoid overhead irrigation.",
-    "diseased_blackrot":        "Bacterial Blight / Black Rot detected. Apply Streptomycin sulfate (200ppm) or Copper-based bactericide. Remove infected plant debris. Practice crop rotation.",
-    "diseased_leaf_curl_virus": "Leaf Curl Virus (Mosaic family) detected. This is viral — no chemical cure. Remove and destroy infected plants. Control whitefly vectors with imidacloprid or neem oil spray.",
-    "diseased_leaf_scorch":     "Leaf Scorch detected. Likely environmental stress (drought, heat, or salt). Increase watering frequency. Apply potassium fertilizer. No pesticide required unless secondary infection.",
-    "diseased_leafspot":        "Leaf Spot (Fungal) detected. Apply Mancozeb 75WP or Chlorothalonil 75WP at 2g/L. Remove infected leaves. Improve plant spacing for airflow. Repeat weekly during wet weather.",
-    "diseased_mosaic_virus":    "Mosaic Virus detected. No chemical cure available. Destroy infected plants. Use certified virus-free seeds. Control aphid and thrip vectors with insecticidal soap or thiamethoxam.",
-    "diseased_powdery_mildew":  "Powdery Mildew detected. Apply Sulphur 80WP (3g/L) or Tebuconazole 25EC. Spray early morning. Improve air circulation. Avoid excess nitrogen fertilizer. Repeat every 10–14 days.",
-    "diseased_rust":            "Rust (Fungal) detected. Apply Propiconazole 25EC or Mancozeb 75WP at first sign. Remove heavily infected leaves. Avoid overhead irrigation. Repeat every 14 days.",
-    "diseased_leaf_mold":       "Leaf Mold detected. Apply Chlorothalonil or Copper-based fungicide. Improve greenhouse ventilation. Reduce humidity below 85%. Remove infected lower leaves.",
-    "healthy":                  "Leaf is Healthy! No disease detected. Continue regular monitoring, proper irrigation, and balanced fertilization.",
-    # Generic fallback
-    "Blight / Leaf Spot":       "Possible blight or leaf spot detected. Apply Mancozeb 75WP or copper-based fungicide. Remove infected leaves and improve airflow.",
+    "diseased_blight": "Apply copper-based fungicide at label rate. Remove severely infected leaves. Repeat every 7–14 days.",
+    "diseased_blackrot": "Use systemic fungicide and prune infected parts. Improve airflow.",
+    "diseased_leaf_curl_virus": "Viral disease — remove infected plants. Control aphid/whitefly vectors (insecticidal soap, sticky traps).",
+    "diseased_leaf_scorch": "Likely environmental — adjust watering and reduce stress. No pesticide usually required.",
+    "diseased_leafspot": "Use protectant fungicide (copper or chlorothalonil). Sanitation and removing infected leaves helps.",
+    "diseased_mosaic_virus": "Virus — remove infected plants, use virus-free seedlings, control vectors.",
+    "diseased_powdery_mildew": "Apply sulfur or potassium bicarbonate; consider systemic fungicide for severe cases.",
+    "diseased_rust": "Use contact or systemic fungicide and remove infected debris. Improve airflow.",
+    "healthy": "No treatment needed. Continue good cultural practices."
 }
 
 try:
